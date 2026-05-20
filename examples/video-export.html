@@ -1,674 +1,813 @@
-<!DOCTYPE html>
 <html lang="zh-CN">
-<head>
-	<meta charset="UTF-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>color4bg.js 1080p 视频导出</title>
-	<style>
-		:root {
-			color-scheme: light;
-			--ink: #1b1b1b;
-			--muted: #666;
-			--line: #ddd8ce;
-			--paper: #f7f5ef;
-			--panel: #ffffff;
-			--accent: #1976d2;
-			--accent-strong: #0f4f98;
-			--danger: #b3261e;
-			--ok: #2f7d4f;
-		}
-
-		* {
-			box-sizing: border-box;
-		}
-
-		body {
-			margin: 0;
-			font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
-			background: var(--paper);
-			color: var(--ink);
-		}
-
-		header {
-			padding: 22px 28px;
-			border-bottom: 1px solid var(--line);
-			background: rgba(255, 255, 255, 0.86);
-			backdrop-filter: blur(14px);
-			position: sticky;
-			top: 0;
-			z-index: 10;
-		}
-
-		h1 {
-			margin: 0;
-			font-size: 28px;
-			line-height: 1.15;
-			letter-spacing: 0;
-		}
-
-		.header-copy {
-			margin: 8px 0 0;
-			color: var(--muted);
-			max-width: 920px;
-			line-height: 1.6;
-		}
-
-		main {
-			display: grid;
-			grid-template-columns: 360px minmax(0, 1fr);
-			gap: 20px;
-			padding: 20px;
-			align-items: start;
-		}
-
-		.controls,
-		.preview-shell,
-		.status-panel {
-			background: var(--panel);
-			border: 1px solid var(--line);
-			border-radius: 8px;
-			box-shadow: 0 16px 40px rgba(35, 30, 20, 0.1);
-		}
-
-		.controls {
-			position: sticky;
-			top: 108px;
-			padding: 18px;
-		}
-
-		.control-group {
-			padding: 16px 0;
-			border-bottom: 1px solid var(--line);
-		}
-
-		.control-group:first-child {
-			padding-top: 0;
-		}
-
-		.control-group:last-child {
-			border-bottom: 0;
-			padding-bottom: 0;
-		}
-
-		h2 {
-			margin: 0 0 12px;
-			font-size: 17px;
-			line-height: 1.3;
-			letter-spacing: 0;
-		}
-
-		label {
-			display: block;
-			margin: 12px 0 6px;
-			font-size: 13px;
-			color: var(--muted);
-		}
-
-		select,
-		input,
-		button {
-			font: inherit;
-		}
-
-		select,
-		input[type="number"],
-		input[type="text"] {
-			width: 100%;
-			min-height: 40px;
-			border: 1px solid var(--line);
-			border-radius: 8px;
-			padding: 8px 10px;
-			background: #fff;
-			color: var(--ink);
-		}
-
-		input[type="range"] {
-			width: 100%;
-		}
-
-		.inline-grid {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 10px;
-		}
-
-		.swatches {
-			display: grid;
-			grid-template-columns: repeat(6, 1fr);
-			gap: 6px;
-			margin-top: 10px;
-		}
-
-		.swatch {
-			height: 24px;
-			border-radius: 6px;
-			border: 1px solid rgba(0, 0, 0, 0.16);
-		}
-
-		.option-row {
-			margin-top: 12px;
-		}
-
-		.option-row .option-head {
-			display: flex;
-			justify-content: space-between;
-			gap: 12px;
-			font-size: 13px;
-			color: var(--muted);
-		}
-
-		.button-row {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: 10px;
-			margin-top: 14px;
-		}
-
-		button {
-			min-height: 42px;
-			border-radius: 8px;
-			border: 1px solid var(--accent);
-			background: var(--accent);
-			color: #fff;
-			font-weight: 700;
-			cursor: pointer;
-		}
-
-		button.secondary {
-			background: #fff;
-			color: var(--accent);
-		}
-
-		button.danger {
-			border-color: var(--danger);
-			background: var(--danger);
-		}
-
-		button:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-		}
-
-		.preview-shell {
-			padding: 16px;
-			overflow: auto;
-		}
-
-		.preview-top {
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: space-between;
-			gap: 10px;
-			align-items: center;
-			margin-bottom: 12px;
-			color: var(--muted);
-			font-size: 14px;
-		}
-
-		.stage-frame {
-			width: 1920px;
-			height: 1080px;
-			background: #111;
-			border-radius: 0;
-			overflow: hidden;
-			position: relative;
-		}
-
-		#export-stage {
-			width: 1920px;
-			height: 1080px;
-			position: relative;
-			overflow: hidden;
-			background: #111;
-		}
-
-		.status-panel {
-			margin-top: 16px;
-			padding: 16px;
-		}
-
-		progress {
-			width: 100%;
-			height: 16px;
-			accent-color: var(--accent);
-		}
-
-		.status-line {
-			margin-top: 10px;
-			color: var(--muted);
-			line-height: 1.6;
-		}
-
-		.download-link {
-			display: none;
-			margin-top: 14px;
-			min-height: 42px;
-			align-items: center;
-			justify-content: center;
-			border-radius: 8px;
-			background: var(--ok);
-			color: #fff;
-			text-decoration: none;
-			font-weight: 700;
-		}
-
-		.note {
-			margin-top: 10px;
-			font-size: 13px;
-			color: var(--muted);
-			line-height: 1.55;
-		}
-
-		.warning {
-			color: var(--danger);
-		}
-
-		code {
-			padding: 2px 5px;
-			border-radius: 5px;
-			background: #eee9df;
-			font-family: Consolas, "SFMono-Regular", monospace;
-		}
-
-		@media (max-width: 980px) {
-			main {
-				grid-template-columns: 1fr;
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://cdn.tailwindcss.com"></script>
+		<title>Export color4bg.js</title>
+		<style>
+			html,
+			body {
+				width: 100%;
+				height: 100%;
 			}
 
-			.controls {
-				position: static;
+			#bg_list::-webkit-scrollbar,
+			.panel-scroll::-webkit-scrollbar {
+				width: 5px;
 			}
-		}
-	</style>
-</head>
-<body>
-	<header>
-		<h1>1080p 动态背景视频导出</h1>
-		<p class="header-copy">这是一个本地导出工具页。它会把 color4bg.js 的 WebGL canvas 固定为 1920×1080，然后用浏览器原生视频编码器录制。3 分钟导出需要真实等待 3 分钟；浏览器支持 MP4 时优先 MP4，否则自动使用 WebM。</p>
-	</header>
+			#bg_list::-webkit-scrollbar-track,
+			.panel-scroll::-webkit-scrollbar-track {
+				margin: 20px;
+			}
+			#bg_list::-webkit-scrollbar-thumb,
+			.panel-scroll::-webkit-scrollbar-thumb {
+				background-color: #e5e7eb;
+				border-radius: 4px;
+			}
 
-	<main>
-		<aside class="controls">
-			<div class="control-group">
-				<h2>背景</h2>
-				<label for="bg-select">背景类型</label>
-				<select id="bg-select"></select>
+			.colors-list-box,
+			.options-list-box,
+			.advanced-list-box,
+			.export-list-box {
+				display: none;
+				position: absolute;
+				top: calc(100% + 0.5rem);
+				right: 0;
+				transform-origin: 100% 0;
+				transform: scale(0);
+				opacity: 0;
+			}
+			.colors-list-box.show,
+			.options-list-box.show,
+			.advanced-list-box.show,
+			.export-list-box.show {
+				transform: scale(1);
+				opacity: 1;
+			}
+			.toolbar-item {
+				position: relative;
+			}
+			.toolbar-item.is-open {
+				z-index: 80;
+			}
+			.toolbar-button {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				min-width: 5.5rem;
+				justify-content: center;
+				border-radius: 9999px;
+				padding: 0.65rem 0.9rem;
+				background: rgba(255, 255, 255, 0.32);
+				color: #111827;
+				font-size: 0.875rem;
+				font-weight: 700;
+				line-height: 1;
+				backdrop-filter: blur(12px);
+				box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+				transition:
+					background-color 160ms ease,
+					opacity 160ms ease,
+					transform 160ms ease;
+			}
+			.toolbar-button:hover {
+				background: rgba(255, 255, 255, 0.52);
+			}
+			.toolbar-button .icon {
+				font-size: 1.1rem;
+			}
+			.toolbar-item.is-open .toolbar-button {
+				opacity: 0;
+				pointer-events: none;
+				transform: translateY(-0.25rem);
+			}
+		</style>
+	</head>
 
-				<label for="palette-select">调色板</label>
-				<select id="palette-select"></select>
-				<div class="swatches" id="swatches"></div>
-
-				<label for="seed-input">Seed</label>
-				<input id="seed-input" type="number" value="1000" min="1" step="1" />
+	<body>
+		<div class="flex h-screen">
+			<div class="px-6 w-64 h-screen">
+				<div id="bg_list" class="p-6 w-full h-full overflow-y-auto overflow-x-hidden rounded-2xl"></div>
 			</div>
 
-			<div class="control-group">
-				<h2>视频</h2>
-				<div class="inline-grid">
-					<div>
-						<label for="duration-input">时长，秒</label>
-						<input id="duration-input" type="number" value="180" min="1" max="600" step="1" />
+			<div class="p-6 flex-1 h-full bg-white">
+				<div id="box" class="relative flex items-center justify-center w-full h-full bg-gray-100 rounded-2xl overflow-hidden">
+					<div id="export-stage" class="absolute top-1/2 left-1/2 bg-gray-900 overflow-hidden"></div>
+					<div class="z-50 absolute bottom-6 left-6 px-4 py-3 rounded-lg bg-black/30 text-white backdrop-blur">
+						<div class="text-sm font-semibold">1920 x 1080 export stage</div>
+						<div class="text-xs opacity-80" id="estimate_label">5400 frames</div>
 					</div>
-					<div>
-						<label for="fps-select">帧率</label>
-						<select id="fps-select">
-							<option value="30" selected>30 fps</option>
-							<option value="60">60 fps</option>
-						</select>
+
+					<div class="z-50 absolute top-4 right-4 flex items-start gap-2">
+						<div class="toolbar-item" id="box_colors">
+							<button class="toolbar-button cursor-pointer" id="btn_show_colors" type="button">
+								<span class="icon">🎨</span>
+								<span>配色</span>
+							</button>
+							<div class="colors-list-box p-4 bg-gray-100 rounded-2xl transition shadow-2xl">
+								<div class="px-2 pb-2 text-sm text-gray-500">Palette: <span id="active_palette" class="font-semibold text-gray-700">vivid</span></div>
+								<ul id="colors_list" class="panel-scroll w-96 max-h-[72vh] overflow-y-auto"></ul>
+							</div>
+						</div>
+
+						<div class="toolbar-item" id="box_options">
+							<button class="toolbar-button cursor-pointer" id="btn_show_options" type="button">
+								<span class="icon">🎛</span>
+								<span>基础</span>
+							</button>
+							<div class="options-list-box p-4 bg-gray-100 rounded-2xl transition shadow-2xl">
+								<div class="px-2 pb-2 text-sm font-semibold text-gray-600">Basic Options</div>
+								<ul id="options_list" class="panel-scroll max-h-[70vh] overflow-y-auto"></ul>
+							</div>
+						</div>
+
+						<div class="toolbar-item" id="box_advanced_options">
+							<button class="toolbar-button cursor-pointer" id="btn_show_advanced_options" type="button">
+								<span class="icon">🔧</span>
+								<span>高级</span>
+							</button>
+							<div class="advanced-list-box p-4 bg-gray-100 rounded-2xl transition shadow-2xl">
+								<div class="px-2 pb-2 text-sm font-semibold text-gray-600">Advanced Uniforms</div>
+								<ul id="advanced_options_list" class="panel-scroll max-h-[70vh] overflow-y-auto"></ul>
+							</div>
+						</div>
+
+						<div class="toolbar-item" id="box_export">
+							<button class="toolbar-button cursor-pointer" id="btn_show_export" type="button">
+								<span class="icon">⏺</span>
+								<span>导出</span>
+							</button>
+							<div class="export-list-box p-4 w-96 bg-gray-100 rounded-2xl transition shadow-2xl">
+								<div class="px-2 pb-2 text-sm font-semibold text-gray-600">Video Export</div>
+								<div class="panel-scroll max-h-[70vh] overflow-y-auto px-2">
+									<label class="block mt-3 text-xs font-semibold text-gray-500">Duration (seconds)</label>
+									<input id="duration_input" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2" type="number" min="1" max="600" value="180" />
+
+									<label class="block mt-3 text-xs font-semibold text-gray-500">FPS</label>
+									<select id="fps_select" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+										<option value="30" selected>30 fps</option>
+										<option value="60">60 fps</option>
+									</select>
+
+									<label class="block mt-3 text-xs font-semibold text-gray-500">Bitrate</label>
+									<select id="bitrate_select" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+										<option value="16000000">16 Mbps</option>
+										<option value="30000000" selected>30 Mbps</option>
+										<option value="50000000">50 Mbps</option>
+									</select>
+
+									<div class="mt-4 grid grid-cols-2 gap-2">
+										<button id="record_btn" class="rounded-lg bg-blue-600 px-4 py-2 text-white font-semibold hover:bg-blue-700">Start</button>
+										<button id="stop_btn" class="rounded-lg bg-red-600 px-4 py-2 text-white font-semibold hover:bg-red-700 disabled:opacity-50" disabled>Stop</button>
+									</div>
+
+									<progress id="progress" class="mt-4 w-full" value="0" max="1"></progress>
+									<div id="status_line" class="mt-2 text-sm text-gray-600">Ready.</div>
+									<a id="download_link" class="hidden mt-3 rounded-lg bg-green-600 px-4 py-2 text-center text-white font-semibold" download>Download video</a>
+									<div id="support_note" class="mt-3 text-xs text-gray-500 leading-relaxed"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<div class="z-40 absolute top-4 left-20" id="box_seed">
+						<div class="absolute p-4 right-0 text-4xl rounded-full bg-gray-100/20 cursor-pointer hover:bg-gray-100/30 transition" id="btn_resetSeed">🎲</div>
 					</div>
 				</div>
-				<label for="bitrate-select">码率</label>
-				<select id="bitrate-select">
-					<option value="16000000">16 Mbps，体积较小</option>
-					<option value="30000000" selected>30 Mbps，推荐</option>
-					<option value="50000000">50 Mbps，高质量</option>
-				</select>
-				<p class="note">分辨率固定为 <code>1920×1080</code>。30fps 的 3 分钟视频约 5400 帧；60fps 约 10800 帧，对浏览器和显卡压力更高。</p>
 			</div>
+		</div>
 
-			<div class="control-group">
-				<h2>参数</h2>
-				<div id="options-box"></div>
-				<p class="note">这里只暴露项目已有的 demo 参数。修改参数会重新创建背景，导出前请先确认预览效果。</p>
-			</div>
+		<script type="module">
+			import { Colors, ColorGroups, Options, Bgs } from "./data.js"
 
-			<div class="control-group">
-				<h2>导出</h2>
-				<button id="record-btn">开始导出视频</button>
-				<div class="button-row">
-					<button class="secondary" id="refresh-btn">重建预览</button>
-					<button class="danger" id="stop-btn" disabled>停止</button>
-				</div>
-				<p class="note" id="support-note"></p>
-			</div>
-		</aside>
+			const stage = document.querySelector("#export-stage")
+			const colorsList = document.querySelector("#colors_list")
+			const optionsList = document.querySelector("#options_list")
+			const advancedList = document.querySelector("#advanced_options_list")
+			const activePalette = document.querySelector("#active_palette")
+			const durationInput = document.querySelector("#duration_input")
+			const fpsSelect = document.querySelector("#fps_select")
+			const bitrateSelect = document.querySelector("#bitrate_select")
+			const recordBtn = document.querySelector("#record_btn")
+			const stopBtn = document.querySelector("#stop_btn")
+			const progress = document.querySelector("#progress")
+			const statusLine = document.querySelector("#status_line")
+			const supportNote = document.querySelector("#support_note")
+			const downloadLink = document.querySelector("#download_link")
+			const estimateLabel = document.querySelector("#estimate_label")
 
-		<section>
-			<div class="preview-shell">
-				<div class="preview-top">
-					<span>导出舞台：1920×1080 原始画布</span>
-					<span id="estimate-label"></span>
-				</div>
-				<div class="stage-frame">
-					<div id="export-stage"></div>
-				</div>
-			</div>
+			const recorderFormats = [
+				{ mimeType: "video/mp4;codecs=avc1.42E01E", extension: "mp4", label: "MP4 / H.264" },
+				{ mimeType: "video/mp4", extension: "mp4", label: "MP4" },
+				{ mimeType: "video/webm;codecs=vp9", extension: "webm", label: "WebM / VP9" },
+				{ mimeType: "video/webm;codecs=vp8", extension: "webm", label: "WebM / VP8" },
+				{ mimeType: "video/webm", extension: "webm", label: "WebM" }
+			]
 
-			<div class="status-panel">
-				<progress id="progress" value="0" max="1"></progress>
-				<div class="status-line" id="status-line">准备就绪。调整背景后点击“开始导出视频”。</div>
-				<a id="download-link" class="download-link" download>下载视频</a>
-			</div>
-		</section>
-	</main>
+			let currentBg = Bgs.find((item) => item.name === getBgFromUrl()) || Bgs.find((item) => item.name === "ambient-light") || Bgs[0]
+			let currentPalette = currentBg.palette || "vivid"
+			let customPaletteColors = null
+			let colorbg = null
+			let mediaRecorder = null
+			let recordTimer = null
+			let progressTimer = null
+			let startedAt = 0
+			let objectUrl = ""
+			let activeFormat = getSupportedFormat()
 
-	<script type="module">
-		import { Colors, ColorGroups, Options, Bgs } from "./data.js"
+			init()
 
-		const stage = document.querySelector("#export-stage")
-		const bgSelect = document.querySelector("#bg-select")
-		const paletteSelect = document.querySelector("#palette-select")
-		const seedInput = document.querySelector("#seed-input")
-		const durationInput = document.querySelector("#duration-input")
-		const fpsSelect = document.querySelector("#fps-select")
-		const bitrateSelect = document.querySelector("#bitrate-select")
-		const optionsBox = document.querySelector("#options-box")
-		const recordBtn = document.querySelector("#record-btn")
-		const stopBtn = document.querySelector("#stop-btn")
-		const refreshBtn = document.querySelector("#refresh-btn")
-		const progress = document.querySelector("#progress")
-		const statusLine = document.querySelector("#status-line")
-		const downloadLink = document.querySelector("#download-link")
-		const supportNote = document.querySelector("#support-note")
-		const estimateLabel = document.querySelector("#estimate-label")
-		const swatches = document.querySelector("#swatches")
-
-		const recorderFormats = [
-			{ mimeType: "video/mp4;codecs=avc1.42E01E", extension: "mp4", label: "MP4 / H.264" },
-			{ mimeType: "video/mp4", extension: "mp4", label: "MP4" },
-			{ mimeType: "video/webm;codecs=vp9", extension: "webm", label: "WebM / VP9" },
-			{ mimeType: "video/webm;codecs=vp8", extension: "webm", label: "WebM / VP8" },
-			{ mimeType: "video/webm", extension: "webm", label: "WebM" }
-		]
-
-		let colorbg = null
-		let mediaRecorder = null
-		let recordTimer = null
-		let progressTimer = null
-		let startedAt = 0
-		let activeFormat = getSupportedFormat()
-		let currentObjectUrl = ""
-
-		init()
-
-		function init() {
-			Bgs.forEach((item) => {
-				const option = document.createElement("option")
-				option.value = item.name
-				option.textContent = item.name
-				bgSelect.appendChild(option)
-			})
-			bgSelect.value = "ambient-light"
-
-			Object.entries(ColorGroups).forEach(([groupName, palettes]) => {
-				const group = document.createElement("optgroup")
-				group.label = groupName
-				Object.keys(palettes).forEach((name) => {
-					const option = document.createElement("option")
-					option.value = name
-					option.textContent = name
-					group.appendChild(option)
-				})
-				paletteSelect.appendChild(group)
-			})
-			paletteSelect.value = "vivid"
-
-			if (!activeFormat) {
-				supportNote.innerHTML = '<span class="warning">当前浏览器不支持 MediaRecorder 视频编码，无法在浏览器内导出。</span>'
-				recordBtn.disabled = true
-			} else {
-				supportNote.textContent = `当前浏览器将使用 ${activeFormat.label} 导出。`
-			}
-
-			bgSelect.addEventListener("change", () => {
-				syncPaletteToBg()
-				buildOptionControls()
+			function init() {
+				setupStageScale()
+				window.addEventListener("resize", setupStageScale)
+				listColorBgs()
+				listPalettes()
 				recreateBackground()
-			})
-			paletteSelect.addEventListener("change", recreateBackground)
-			seedInput.addEventListener("change", recreateBackground)
-			durationInput.addEventListener("input", updateEstimate)
-			fpsSelect.addEventListener("change", updateEstimate)
-			bitrateSelect.addEventListener("change", updateEstimate)
-			refreshBtn.addEventListener("click", recreateBackground)
-			recordBtn.addEventListener("click", startRecording)
-			stopBtn.addEventListener("click", stopRecording)
+				bindPanels()
+				bindExport()
+				updateEstimate()
 
-			syncPaletteToBg()
-			buildOptionControls()
-			recreateBackground()
-			updateEstimate()
-		}
-
-		function getSupportedFormat() {
-			if (!("MediaRecorder" in window)) return null
-			return recorderFormats.find((format) => MediaRecorder.isTypeSupported(format.mimeType)) || null
-		}
-
-		function getSelectedBg() {
-			return Bgs.find((item) => item.name === bgSelect.value) || Bgs[0]
-		}
-
-		function syncPaletteToBg() {
-			const bg = getSelectedBg()
-			paletteSelect.value = bg.palette || "vivid"
-			renderSwatches()
-		}
-
-		function renderSwatches() {
-			swatches.innerHTML = ""
-			Colors[paletteSelect.value].forEach((hex) => {
-				const item = document.createElement("div")
-				item.className = "swatch"
-				item.style.background = hex
-				swatches.appendChild(item)
-			})
-		}
-
-		function buildOptionControls() {
-			const optionDefs = Options[bgSelect.value] || []
-			optionsBox.innerHTML = ""
-
-			if (optionDefs.length === 0) {
-				const empty = document.createElement("p")
-				empty.className = "note"
-				empty.textContent = "这个背景没有额外 demo 参数。"
-				optionsBox.appendChild(empty)
-				return
+				if (activeFormat) {
+					supportNote.textContent = `Current encoder: ${activeFormat.label}. Keep this tab open while exporting.`
+				} else {
+					supportNote.textContent = "MediaRecorder video export is not supported in this browser."
+					recordBtn.disabled = true
+				}
 			}
 
-			optionDefs.forEach((definition) => {
-				const row = document.createElement("div")
-				row.className = "option-row"
+			function setupStageScale() {
+				const box = document.querySelector("#box")
+				const scale = Math.min(box.clientWidth / 1920, box.clientHeight / 1080)
+				stage.style.width = "1920px"
+				stage.style.height = "1080px"
+				stage.style.transform = `translate(-50%, -50%) scale(${scale})`
+				stage.style.transformOrigin = "center center"
+			}
 
-				const head = document.createElement("div")
-				head.className = "option-head"
-				const label = document.createElement("span")
-				label.textContent = definition.display || definition.name
-				const value = document.createElement("span")
-				value.textContent = definition.value
-				head.append(label, value)
-				row.appendChild(head)
+			function listColorBgs() {
+				const list = document.querySelector("#bg_list")
+				list.innerHTML = ""
+				Bgs.forEach((item) => {
+					const image = document.createElement("img")
+					image.src = `./assets/images/${item.name}.jpg`
+					image.setAttribute("class", "rounded-lg hover:opacity-85 cursor-pointer")
+
+					const title = document.createElement("div")
+					title.setAttribute("class", "mt-1 text-sm text-gray-500")
+					title.textContent = item.name
+
+					const link = document.createElement("a")
+					link.setAttribute("class", "bg-item block mb-2")
+					link.href = `./video-export.html?bg=${item.name}`
+					link.addEventListener("click", (event) => {
+						event.preventDefault()
+						currentBg = item
+						history.replaceState(null, "", `./video-export.html?bg=${item.name}`)
+						recreateBackground()
+					})
+					link.append(image, title)
+					list.appendChild(link)
+				})
+			}
+
+			function listPalettes() {
+				colorsList.innerHTML = ""
+				addPhotoPaletteImporter()
+				for (const groupName in ColorGroups) {
+					const groupTitle = document.createElement("li")
+					groupTitle.setAttribute("class", "mt-4 mb-1 px-2 text-xs font-bold uppercase tracking-wide text-gray-500")
+					groupTitle.textContent = groupName
+					colorsList.appendChild(groupTitle)
+
+					for (const paletteKey in ColorGroups[groupName]) {
+						const palette = ColorGroups[groupName][paletteKey]
+						const row = document.createElement("li")
+						row.setAttribute("class", "color-row m-2 p-3 min-w-64 hover:bg-white/50 rounded-lg cursor-pointer")
+						row.addEventListener("click", () => {
+							currentPalette = paletteKey
+							applyPalette(paletteKey)
+						})
+
+						const title = document.createElement("div")
+						title.setAttribute("class", "mb-2 flex items-center justify-between gap-4 text-sm font-semibold text-gray-600")
+						title.innerHTML = `<span>${paletteKey}</span><span class="text-xs font-normal text-gray-400">${groupName}</span>`
+
+						const preview = document.createElement("div")
+						preview.setAttribute("class", "flex justify-evenly gap-1")
+						palette.forEach((hex) => {
+							const swatch = document.createElement("div")
+							swatch.setAttribute("class", "h-8 flex-1 rounded-lg border border-white/70 shadow-sm")
+							swatch.style.background = hex
+							preview.appendChild(swatch)
+						})
+
+						row.append(title, preview)
+						colorsList.appendChild(row)
+					}
+				}
+			}
+
+			function recreateBackground() {
+				if (mediaRecorder && mediaRecorder.state === "recording") return
+				if (objectUrl) URL.revokeObjectURL(objectUrl)
+				objectUrl = ""
+				downloadLink.classList.add("hidden")
+				downloadLink.removeAttribute("href")
+
+				if (colorbg) colorbg.destroy()
+				stage.innerHTML = ""
+				currentPalette = currentPalette in Colors || customPaletteColors ? currentPalette : currentBg.palette || "vivid"
+				const colors = customPaletteColors && !(currentPalette in Colors) ? customPaletteColors : Colors[currentPalette]
+				activePalette.textContent = currentPalette
+				colorbg = new currentBg.class({
+					dom: "export-stage",
+					colors: [...colors],
+					seed: 1000,
+					loop: true,
+					playbackSpeed: 1
+				})
+				buildBasicOptions()
+				buildAdvancedOptions()
+			}
+
+			function applyPalette(name) {
+				customPaletteColors = null
+				activePalette.textContent = name
+				if (colorbg) colorbg.colors([...Colors[name]])
+			}
+
+			function applyCustomPalette(colors, label = "photo import") {
+				customPaletteColors = [...colors]
+				currentPalette = label
+				activePalette.textContent = label
+				if (colorbg) colorbg.colors([...customPaletteColors])
+			}
+
+			function addPhotoPaletteImporter() {
+				const row = document.createElement("li")
+				row.setAttribute("class", "m-2 p-3 min-w-64 rounded-lg border border-dashed border-gray-300 bg-white/70")
+
+				const label = document.createElement("label")
+				label.setAttribute("class", "block cursor-pointer rounded-lg bg-gray-900 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-gray-700")
+				label.textContent = "导入照片提取配色"
 
 				const input = document.createElement("input")
-				input.dataset.optionName = definition.name
-				input.value = definition.value
+				input.type = "file"
+				input.accept = "image/*"
+				input.setAttribute("class", "hidden")
 
-				if (definition.type === "range") {
-					input.type = "range"
-					input.min = definition.min
-					input.max = definition.max
-					input.step = definition.step
-				} else {
-					input.type = "text"
-				}
+				const status = document.createElement("div")
+				status.setAttribute("class", "mt-2 text-xs text-gray-500")
+				status.textContent = "选择本地图片后自动生成 6 色方案。"
 
-				input.addEventListener("input", () => {
-					value.textContent = input.value
-					if (definition.name === "playbackSpeed" && colorbg && typeof colorbg.setPlaybackSpeed === "function") {
-						colorbg.setPlaybackSpeed(input.value)
-					} else if (definition.name === "seed" && colorbg) {
-						colorbg.reset(parseFloat(input.value))
-					} else if (colorbg && typeof colorbg.update === "function") {
-						colorbg.update(definition.name, input.value)
+				const preview = document.createElement("div")
+				preview.setAttribute("class", "mt-3 hidden justify-evenly gap-1")
+
+				input.addEventListener("change", async () => {
+					const file = input.files && input.files[0]
+					if (!file) return
+					status.textContent = "正在分析图片颜色..."
+					try {
+						const colors = await extractPaletteFromImage(file, 6)
+						renderPalettePreview(preview, colors)
+						applyCustomPalette(colors)
+						status.textContent = `已从 ${file.name} 提取配色。`
+					} catch (error) {
+						console.error(error)
+						status.textContent = "图片读取失败，请换一张常见格式图片。"
+					} finally {
+						input.value = ""
 					}
 				})
 
-				row.appendChild(input)
-				optionsBox.appendChild(row)
-			})
-		}
-
-		function recreateBackground() {
-			if (mediaRecorder && mediaRecorder.state === "recording") return
-			if (currentObjectUrl) {
-				URL.revokeObjectURL(currentObjectUrl)
-				currentObjectUrl = ""
+				label.appendChild(input)
+				row.append(label, status, preview)
+				colorsList.appendChild(row)
 			}
-			downloadLink.style.display = "none"
-			downloadLink.removeAttribute("href")
 
-			if (colorbg) {
-				colorbg.destroy()
-				colorbg = null
-			}
-			stage.innerHTML = ""
-			renderSwatches()
+			async function extractPaletteFromImage(file, count = 6) {
+				const image = await loadImage(file)
+				const canvas = document.createElement("canvas")
+				const maxSide = 180
+				const scale = Math.min(1, maxSide / Math.max(image.width, image.height))
+				canvas.width = Math.max(1, Math.round(image.width * scale))
+				canvas.height = Math.max(1, Math.round(image.height * scale))
 
-			const bg = getSelectedBg()
-			colorbg = new bg.class({
-				dom: "export-stage",
-				colors: [...Colors[paletteSelect.value]],
-				seed: Number(seedInput.value) || 1000,
-				loop: true
-			})
+				const context = canvas.getContext("2d", { willReadFrequently: true })
+				context.drawImage(image, 0, 0, canvas.width, canvas.height)
+				const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+				const buckets = new Map()
+				const step = Math.max(4, Math.floor(pixels.length / 4 / 12000) * 4)
 
-			applyCurrentOptions()
-		}
-
-		function applyCurrentOptions() {
-			if (!colorbg || typeof colorbg.update !== "function") return
-			optionsBox.querySelectorAll("[data-option-name]").forEach((input) => {
-				const name = input.dataset.optionName
-				if (name === "seed") {
-					colorbg.reset(parseFloat(input.value))
-				} else if (name === "playbackSpeed" && typeof colorbg.setPlaybackSpeed === "function") {
-					colorbg.setPlaybackSpeed(input.value)
-				} else {
-					colorbg.update(name, input.value)
+				for (let index = 0; index < pixels.length; index += step) {
+					const alpha = pixels[index + 3]
+					if (alpha < 180) continue
+					const r = pixels[index]
+					const g = pixels[index + 1]
+					const b = pixels[index + 2]
+					const key = `${r >> 4},${g >> 4},${b >> 4}`
+					const bucket = buckets.get(key) || { r: 0, g: 0, b: 0, count: 0 }
+					bucket.r += r
+					bucket.g += g
+					bucket.b += b
+					bucket.count += 1
+					buckets.set(key, bucket)
 				}
-			})
-		}
 
-		async function startRecording() {
-			if (!activeFormat || !colorbg) return
-			const canvas = stage.querySelector("canvas")
-			if (!canvas || typeof canvas.captureStream !== "function") {
-				statusLine.innerHTML = '<span class="warning">没有找到可录制的 WebGL canvas，或当前浏览器不支持 canvas.captureStream。</span>'
-				return
+				const candidates = [...buckets.values()]
+					.map((bucket) => {
+						const r = Math.round(bucket.r / bucket.count)
+						const g = Math.round(bucket.g / bucket.count)
+						const b = Math.round(bucket.b / bucket.count)
+						const [h, s, l] = rgbToHsl(r, g, b)
+						return { r, g, b, h, s, l, count: bucket.count, score: bucket.count * (0.72 + s * 0.5) }
+					})
+					.sort((a, b) => b.score - a.score)
+
+				const selected = []
+				for (const threshold of [82, 64, 48, 32, 0]) {
+					for (const color of candidates) {
+						if (selected.length >= count) break
+						if (selected.some((picked) => colorDistance(color, picked) < threshold)) continue
+						selected.push(color)
+					}
+					if (selected.length >= count) break
+				}
+
+				while (selected.length < count) {
+					selected.push(selected[selected.length - 1] || { r: 240, g: 240, b: 240 })
+				}
+
+				return selected.slice(0, count).map(({ r, g, b }) => rgbToHex(r, g, b))
 			}
 
-			const durationMs = clamp(Number(durationInput.value) || 180, 1, 600) * 1000
-			const fps = Number(fpsSelect.value) || 30
-			const bitrate = Number(bitrateSelect.value) || 30000000
-			const chunks = []
+			function loadImage(file) {
+				return new Promise((resolve, reject) => {
+					const url = URL.createObjectURL(file)
+					const image = new Image()
+					image.onload = () => {
+						URL.revokeObjectURL(url)
+						resolve(image)
+					}
+					image.onerror = () => {
+						URL.revokeObjectURL(url)
+						reject(new Error("Unable to load image."))
+					}
+					image.src = url
+				})
+			}
 
-			progress.value = 0
-			recordBtn.disabled = true
-			refreshBtn.disabled = true
-			stopBtn.disabled = false
-			downloadLink.style.display = "none"
-			statusLine.textContent = `正在录制 ${durationMs / 1000} 秒，录制期间请保持页面打开。`
+			function renderPalettePreview(container, colors) {
+				container.innerHTML = ""
+				container.classList.remove("hidden")
+				container.classList.add("flex")
+				colors.forEach((hex) => {
+					const swatch = document.createElement("div")
+					swatch.setAttribute("class", "h-8 flex-1 rounded-lg border border-white/70 shadow-sm")
+					swatch.style.background = hex
+					container.appendChild(swatch)
+				})
+			}
 
-			const stream = canvas.captureStream(fps)
-			mediaRecorder = new MediaRecorder(stream, {
-				mimeType: activeFormat.mimeType,
-				videoBitsPerSecond: bitrate
-			})
+			function rgbToHex(r, g, b) {
+				return `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("").toUpperCase()}`
+			}
 
-			mediaRecorder.addEventListener("dataavailable", (event) => {
-				if (event.data && event.data.size > 0) chunks.push(event.data)
-			})
+			function rgbToHsl(r, g, b) {
+				r /= 255
+				g /= 255
+				b /= 255
+				const max = Math.max(r, g, b)
+				const min = Math.min(r, g, b)
+				let h = 0
+				let s = 0
+				const l = (max + min) / 2
+				if (max !== min) {
+					const d = max - min
+					s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+					switch (max) {
+						case r:
+							h = (g - b) / d + (g < b ? 6 : 0)
+							break
+						case g:
+							h = (b - r) / d + 2
+							break
+						default:
+							h = (r - g) / d + 4
+					}
+					h /= 6
+				}
+				return [h, s, l]
+			}
 
-			mediaRecorder.addEventListener("stop", () => {
+			function colorDistance(a, b) {
+				return Math.hypot(a.r - b.r, a.g - b.g, a.b - b.b)
+			}
+
+			function buildBasicOptions() {
+				optionsList.innerHTML = ""
+				const optionDefs = Options[currentBg.name] || []
+				if (optionDefs.length === 0) {
+					const empty = document.createElement("li")
+					empty.setAttribute("class", "p-3 text-sm text-gray-500")
+					empty.textContent = "No basic options."
+					optionsList.appendChild(empty)
+					return
+				}
+
+				optionDefs.forEach((definition) => {
+					const row = document.createElement("li")
+					row.setAttribute("class", "flex items-center")
+
+					const label = document.createElement("div")
+					label.setAttribute("class", "slider-label my-1 mr-6 w-28 text-sm text-right")
+					label.textContent = definition.display || definition.name
+
+					const value = document.createElement("div")
+					value.setAttribute("class", "slider-num ml-4 w-14 text-sm")
+					value.textContent = definition.value
+
+					const input = document.createElement("input")
+					input.value = definition.value
+					input.setAttribute("class", "slider-range w-40")
+					if (definition.type === "range") {
+						input.type = "range"
+						input.min = definition.min
+						input.max = definition.max
+						input.step = definition.step
+					} else {
+						input.type = "text"
+					}
+					input.addEventListener("input", () => {
+						value.textContent = input.value
+						applyBasicOption(definition.name, input.value)
+					})
+
+					row.append(label, input, value)
+					optionsList.appendChild(row)
+				})
+			}
+
+			function applyBasicOption(name, value) {
+				if (!colorbg) return
+				if (name === "playbackSpeed" && typeof colorbg.setPlaybackSpeed === "function") {
+					colorbg.setPlaybackSpeed(value)
+				} else if (name === "seed") {
+					colorbg.reset(parseFloat(value))
+				} else if (typeof colorbg.update === "function") {
+					colorbg.update(name, value)
+				}
+			}
+
+			function buildAdvancedOptions() {
+				advancedList.innerHTML = ""
+				const groups = collectUniformControls(colorbg)
+				if (groups.length === 0) {
+					const empty = document.createElement("li")
+					empty.setAttribute("class", "p-3 text-sm text-gray-500")
+					empty.textContent = "No advanced uniforms found."
+					advancedList.appendChild(empty)
+					return
+				}
+
+				groups.forEach((group) => {
+					const title = document.createElement("li")
+					title.setAttribute("class", "mt-3 mb-2 px-2 text-xs font-bold uppercase tracking-wide text-gray-500")
+					title.textContent = group.label
+					advancedList.appendChild(title)
+
+					group.controls.forEach((control) => {
+						const row = document.createElement("li")
+						row.setAttribute("class", "flex items-center")
+
+						const label = document.createElement("div")
+						label.setAttribute("class", "slider-label my-1 mr-6 w-36 text-xs text-right text-gray-600")
+						label.textContent = control.label
+
+						const value = document.createElement("div")
+						value.setAttribute("class", "slider-num ml-4 w-14 text-xs")
+						value.textContent = trimNumber(control.value)
+
+						const input = document.createElement("input")
+						input.type = "range"
+						input.min = control.min
+						input.max = control.max
+						input.step = control.step
+						input.value = control.value
+						input.setAttribute("class", "slider-range w-40")
+						input.addEventListener("input", () => {
+							colorbg.setUniformValue(control.programKey, control.uniformName, input.value, control.componentIndex)
+							value.textContent = trimNumber(input.value)
+						})
+
+						row.append(label, input, value)
+						advancedList.appendChild(row)
+					})
+				})
+			}
+
+			function collectUniformControls(bg) {
+				const knownPrograms = [
+					["_planeShader", "Plane"],
+					["planeShader", "Plane"],
+					["rttProgram", "Render Texture"],
+					["_blobShader", "Blob"],
+					["_cubeShader", "Cube"]
+				]
+				return knownPrograms
+					.map(([programKey, label]) => {
+						const program = bg[programKey]
+						if (!program || !program.uniforms) return null
+						const controls = Object.entries(program.uniforms).flatMap(([uniformName, uniform]) => makeUniformControls(programKey, uniformName, uniform))
+						return controls.length ? { label, controls } : null
+					})
+					.filter(Boolean)
+			}
+
+			function makeUniformControls(programKey, uniformName, uniform) {
+				if (!uniform || uniform.value === undefined || shouldHideUniform(uniformName, uniform.value)) return []
+				if (typeof uniform.value === "number") return [makeScalarControl(programKey, uniformName, uniformName, uniform.value)]
+				if (uniform.value && typeof uniform.value === "object" && typeof uniform.value.length === "number" && uniform.value.length <= 4) {
+					return Array.from({ length: uniform.value.length }, (_, index) => {
+						const axis = ["x", "y", "z", "w"][index] || index
+						return makeScalarControl(programKey, uniformName, `${uniformName}.${axis}`, uniform.value[index], index)
+					}).filter(Boolean)
+				}
+				return []
+			}
+
+			function makeScalarControl(programKey, uniformName, label, value, componentIndex = null) {
+				if (!Number.isFinite(value)) return null
+				return { programKey, uniformName, componentIndex, label, value, ...inferRange(uniformName, label, value) }
+			}
+
+			function shouldHideUniform(name, value) {
+				if (name.startsWith("u_color_")) return true
+				if (name === "tMap" || name === "u_resolution" || name === "u_time" || name === "uTime") return true
+				if (value && typeof value === "object" && value.texture) return true
+				return false
+			}
+
+			function inferRange(name, label, value) {
+				const key = `${name} ${label}`.toLowerCase()
+				if (key.includes("rotate")) return { min: 0, max: 360, step: 1 }
+				if (key.includes("brightness")) return { min: 0, max: 2, step: 0.01 }
+				if (key.includes("darkness")) return { min: 0, max: 1, step: 0.01 }
+				if (key.includes("radius")) return { min: 0, max: 1, step: 0.01 }
+				if (key.includes("border")) return { min: 0, max: 0.3, step: 0.005 }
+				if (key.includes("scale")) return { min: 0, max: Math.max(10, value * 3), step: 0.01 }
+				if (key.includes("spacing")) return { min: 0, max: Math.max(200, value * 3), step: 1 }
+				if (key.includes("fog")) return { min: 0, max: 10000, step: 10 }
+				if (key.includes("num")) return { min: 1, max: 40, step: 1 }
+				if (key.includes("random") || key.includes("rand") || key.includes("seed")) return { min: -500, max: 1000, step: 1 }
+				if (value >= 0 && value <= 1) return { min: 0, max: 1, step: 0.01 }
+				return { min: Math.min(-100, value * 2), max: Math.max(100, value * 2), step: 0.01 }
+			}
+
+			function bindPanels() {
+				bindHoverPanel("#btn_show_colors", "#box_colors", ".colors-list-box")
+				bindHoverPanel("#btn_show_options", "#box_options", ".options-list-box")
+				bindHoverPanel("#btn_show_advanced_options", "#box_advanced_options", ".advanced-list-box")
+				bindHoverPanel("#btn_show_export", "#box_export", ".export-list-box")
+				document.querySelector("#btn_resetSeed").addEventListener("click", () => colorbg.reset(Math.floor(Math.random() * 100000)))
+			}
+
+			function bindHoverPanel(buttonSelector, boxSelector, panelSelector) {
+				document.querySelector(buttonSelector).addEventListener("mouseenter", () => {
+					const box = document.querySelector(boxSelector)
+					const panel = document.querySelector(panelSelector)
+					panel.style.display = "block"
+					box.classList.add("is-open")
+					setTimeout(() => panel.classList.add("show"), 20)
+				})
+				document.querySelector(boxSelector).addEventListener("mouseleave", () => {
+					const box = document.querySelector(boxSelector)
+					const panel = document.querySelector(panelSelector)
+					panel.classList.remove("show")
+					box.classList.remove("is-open")
+					setTimeout(() => {
+						if (!box.matches(":hover")) panel.style.display = "none"
+					}, 160)
+				})
+			}
+
+			function bindExport() {
+				durationInput.addEventListener("input", updateEstimate)
+				fpsSelect.addEventListener("change", updateEstimate)
+				bitrateSelect.addEventListener("change", updateEstimate)
+				recordBtn.addEventListener("click", startRecording)
+				stopBtn.addEventListener("click", stopRecording)
+			}
+
+			function getSupportedFormat() {
+				if (!("MediaRecorder" in window)) return null
+				return recorderFormats.find((format) => MediaRecorder.isTypeSupported(format.mimeType)) || null
+			}
+
+			async function startRecording() {
+				if (!activeFormat || !colorbg) return
+				const canvas = stage.querySelector("canvas")
+				if (!canvas || typeof canvas.captureStream !== "function") {
+					statusLine.textContent = "No recordable WebGL canvas found."
+					return
+				}
+				const durationMs = clamp(Number(durationInput.value) || 180, 1, 600) * 1000
+				const fps = Number(fpsSelect.value) || 30
+				const bitrate = Number(bitrateSelect.value) || 30000000
+				const chunks = []
+
+				progress.value = 0
+				recordBtn.disabled = true
+				stopBtn.disabled = false
+				downloadLink.classList.add("hidden")
+				statusLine.textContent = `Recording ${durationMs / 1000}s. Keep this tab open.`
+
+				const stream = canvas.captureStream(fps)
+				mediaRecorder = new MediaRecorder(stream, {
+					mimeType: activeFormat.mimeType,
+					videoBitsPerSecond: bitrate
+				})
+				mediaRecorder.addEventListener("dataavailable", (event) => {
+					if (event.data && event.data.size > 0) chunks.push(event.data)
+				})
+				mediaRecorder.addEventListener("stop", () => {
+					clearTimers()
+					stream.getTracks().forEach((track) => track.stop())
+					const blob = new Blob(chunks, { type: activeFormat.mimeType })
+					const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+					const filename = `color4bg-${currentBg.name}-1080p-${fps}fps-${timestamp}.${activeFormat.extension}`
+					objectUrl = URL.createObjectURL(blob)
+					downloadLink.href = objectUrl
+					downloadLink.download = filename
+					downloadLink.textContent = `Download ${filename}`
+					downloadLink.classList.remove("hidden")
+					statusLine.textContent = `Done. File size: ${formatBytes(blob.size)}.`
+					recordBtn.disabled = false
+					stopBtn.disabled = true
+					progress.value = 1
+					mediaRecorder = null
+				})
+
+				startedAt = performance.now()
+				mediaRecorder.start(1000)
+				progressTimer = setInterval(() => {
+					const elapsed = performance.now() - startedAt
+					progress.value = Math.min(elapsed / durationMs, 1)
+					statusLine.textContent = `Recording: ${formatTime(elapsed / 1000)} / ${formatTime(durationMs / 1000)}`
+				}, 250)
+				recordTimer = setTimeout(stopRecording, durationMs)
+			}
+
+			function stopRecording() {
+				if (mediaRecorder && mediaRecorder.state === "recording") {
+					mediaRecorder.stop()
+					statusLine.textContent = "Packaging video..."
+				}
 				clearTimers()
-				stream.getTracks().forEach((track) => track.stop())
-				const blob = new Blob(chunks, { type: activeFormat.mimeType })
-				const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
-				const filename = `color4bg-${bgSelect.value}-1080p-${fps}fps-${timestamp}.${activeFormat.extension}`
-				currentObjectUrl = URL.createObjectURL(blob)
-				downloadLink.href = currentObjectUrl
-				downloadLink.download = filename
-				downloadLink.textContent = `下载视频：${filename}`
-				downloadLink.style.display = "flex"
-				statusLine.textContent = `导出完成，文件大小约 ${formatBytes(blob.size)}。`
-				recordBtn.disabled = false
-				refreshBtn.disabled = false
-				stopBtn.disabled = true
-				progress.value = 1
-				mediaRecorder = null
-			})
-
-			startedAt = performance.now()
-			mediaRecorder.start(1000)
-			progressTimer = setInterval(() => {
-				const elapsed = performance.now() - startedAt
-				progress.value = Math.min(elapsed / durationMs, 1)
-				statusLine.textContent = `正在录制：${formatTime(elapsed / 1000)} / ${formatTime(durationMs / 1000)}`
-			}, 250)
-			recordTimer = setTimeout(stopRecording, durationMs)
-		}
-
-		function stopRecording() {
-			if (mediaRecorder && mediaRecorder.state === "recording") {
-				mediaRecorder.stop()
-				statusLine.textContent = "正在封装视频文件..."
 			}
-			clearTimers()
-		}
 
-		function clearTimers() {
-			if (recordTimer) clearTimeout(recordTimer)
-			if (progressTimer) clearInterval(progressTimer)
-			recordTimer = null
-			progressTimer = null
-		}
+			function clearTimers() {
+				if (recordTimer) clearTimeout(recordTimer)
+				if (progressTimer) clearInterval(progressTimer)
+				recordTimer = null
+				progressTimer = null
+			}
 
-		function updateEstimate() {
-			const duration = clamp(Number(durationInput.value) || 180, 1, 600)
-			const fps = Number(fpsSelect.value) || 30
-			const bitrate = Number(bitrateSelect.value) || 30000000
-			const frames = duration * fps
-			const estimatedBytes = (bitrate / 8) * duration
-			estimateLabel.textContent = `${frames.toLocaleString()} 帧，估计成品约 ${formatBytes(estimatedBytes)}`
-		}
+			function updateEstimate() {
+				const duration = clamp(Number(durationInput.value) || 180, 1, 600)
+				const fps = Number(fpsSelect.value) || 30
+				const bitrate = Number(bitrateSelect.value) || 30000000
+				const frames = duration * fps
+				const estimatedBytes = (bitrate / 8) * duration
+				estimateLabel.textContent = `${frames.toLocaleString()} frames, estimated ${formatBytes(estimatedBytes)}`
+			}
 
-		function clamp(value, min, max) {
-			return Math.min(Math.max(value, min), max)
-		}
+			function getBgFromUrl() {
+				return new URLSearchParams(window.location.search).get("bg")
+			}
 
-		function formatTime(totalSeconds) {
-			const seconds = Math.max(0, Math.floor(totalSeconds))
-			const m = Math.floor(seconds / 60)
-			const s = seconds % 60
-			return `${m}:${String(s).padStart(2, "0")}`
-		}
+			function trimNumber(value) {
+				const num = parseFloat(value)
+				if (!Number.isFinite(num)) return value
+				return Math.round(num * 1000) / 1000
+			}
 
-		function formatBytes(bytes) {
-			if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-			if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-			return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
-		}
-	</script>
-</body>
+			function clamp(value, min, max) {
+				return Math.min(Math.max(value, min), max)
+			}
+
+			function formatTime(totalSeconds) {
+				const seconds = Math.max(0, Math.floor(totalSeconds))
+				const m = Math.floor(seconds / 60)
+				const s = seconds % 60
+				return `${m}:${String(s).padStart(2, "0")}`
+			}
+
+			function formatBytes(bytes) {
+				if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+				if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+				return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+			}
+		</script>
+	</body>
 </html>

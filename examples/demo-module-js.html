@@ -104,18 +104,18 @@
 
 		<script type="module">
 			import { Colors, Options, Bgs } from "./data.js"
-			import { UI, getBgTypeFromUrl } from "./ui.js"
+			import { UI, getBgTypeFromUrl, getCurrentPalette } from "./ui.js"
 			// import { CurveGradientBg } from "../build/jsm/CurveGradientBg.module.js"
 			import { CurveGradientBg } from "../src/color4bg/AbstractBackground/CurveGradientBg.js"
 
-			const palette = Colors["pastelglossy"]
+			const palette = getCurrentPalette("pastelglossy")
 
 			let colorbg = getBgTypeFromUrl(Bgs)
 
 			if (!colorbg) {
 				colorbg = new CurveGradientBg({
 					dom: "box", // DOM that you want to add color background
-					colors: ["#FE8BFC", "#BD9FFB", "#8EDBFD", "#C4F5EF", "#E7F9FE", "#E9FFE0"], // 6 Hex colors
+					colors: palette.colors, // 6 Hex colors
 					seed: 1000, // Random seed
 					loop: true, // Whether the background would be loop animated,
 					playbackSpeed: 1

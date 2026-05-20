@@ -1,5 +1,8 @@
 import { ColorGroups, Colors } from "./data.js"
 
+const PaletteStorageKey = "color4bg.currentPalette"
+const CustomPaletteLabel = "photo import"
+
 export class UI {
 	constructor(Colors, Bgs, Options, colorbg, palette) {
 		listColorBgs(Bgs)
@@ -11,6 +14,12 @@ export class UI {
 }
 
 function listPalettes(ColorGroups, colorbg, palette) {
+	updateActivePaletteLabel(getStoredPaletteState().label)
+
+	addPhotoPaletteImporter(colors_list, (colors) => {
+		changePalette(colors, "photo import")
+	})
+
 	for (const groupName in ColorGroups) {
 		let groupTitle = document.createElement("li")
 		groupTitle.setAttribute("class", "mt-4 mb-1 px-2 text-xs font-bold uppercase tracking-wide text-gray-500")
@@ -48,12 +57,219 @@ function listPalettes(ColorGroups, colorbg, palette) {
 	function changePalette(colors, paletteKey) {
 		document.querySelector("#box_colors").classList.remove("show")
 		palette = [...colors]
+		savePaletteState(paletteKey, palette)
 		colorbg.colors(palette)
-		const active = document.querySelector("#active_palette")
-		if (active) {
-			active.textContent = paletteKey
-		}
+		updateActivePaletteLabel(paletteKey)
 	}
+}
+
+function getStoredPaletteState(defaultName = "pastelglossy") {
+	try {
+		const raw = sessionStorage.getItem(PaletteStorageKey)
+		if (!raw) return { label: defaultName, colors: Colors[defaultName] }
+		const stored = JSON.parse(raw)
+		if (Array.isArray(stored.colors) && stored.colors.length > 0) {
+			return {
+				label: stored.label || CustomPaletteLabel,
+				colors: stored.colors
+			}
+		}
+		if (stored.name && Colors[stored.name]) {
+			return {
+				label: stored.name,
+				colors: Colors[stored.name]
+			}
+		}
+	} catch (error) {
+		console.warn("Unable to read saved palette.", error)
+	}
+	return { label: defaultName, colors: Colors[defaultName] }
+}
+
+function savePaletteState(label, colors) {
+	try {
+		const isPreset = Boolean(Colors[label])
+		sessionStorage.setItem(
+			PaletteStorageKey,
+			JSON.stringify({
+				name: isPreset ? label : null,
+				label,
+				colors: [...colors]
+			})
+		)
+	} catch (error) {
+		console.warn("Unable to save palette.", error)
+	}
+}
+
+function updateActivePaletteLabel(label) {
+	const active = document.querySelector("#active_palette")
+	if (active) active.textContent = label
+}
+
+export function getCurrentPalette(defaultName = "pastelglossy") {
+	return getStoredPaletteState(defaultName)
+}
+
+function addPhotoPaletteImporter(container, applyColors) {
+	const row = document.createElement("li")
+	row.setAttribute("class", "m-2 p-3 min-w-64 rounded-lg border border-dashed border-gray-300 bg-white/70")
+
+	const label = document.createElement("label")
+	label.setAttribute("class", "block cursor-pointer rounded-lg bg-gray-900 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-gray-700")
+	label.textContent = "导入照片提取配色"
+
+	const input = document.createElement("input")
+	input.type = "file"
+	input.accept = "image/*"
+	input.setAttribute("class", "hidden")
+
+	const status = document.createElement("div")
+	status.setAttribute("class", "mt-2 text-xs text-gray-500")
+	status.textContent = "选择本地图片后自动生成 6 色方案。"
+
+	const preview = document.createElement("div")
+	preview.setAttribute("class", "mt-3 hidden justify-evenly gap-1")
+
+	input.addEventListener("change", async () => {
+		const file = input.files && input.files[0]
+		if (!file) return
+		status.textContent = "正在分析图片颜色..."
+		try {
+			const colors = await extractPaletteFromImage(file, 6)
+			renderPalettePreview(preview, colors)
+			applyColors(colors)
+			status.textContent = `已从 ${file.name} 提取配色。`
+		} catch (error) {
+			console.error(error)
+			status.textContent = "图片读取失败，请换一张常见格式图片。"
+		} finally {
+			input.value = ""
+		}
+	})
+
+	label.appendChild(input)
+	row.append(label, status, preview)
+	container.appendChild(row)
+}
+
+async function extractPaletteFromImage(file, count = 6) {
+	const image = await loadImage(file)
+	const canvas = document.createElement("canvas")
+	const maxSide = 180
+	const scale = Math.min(1, maxSide / Math.max(image.width, image.height))
+	canvas.width = Math.max(1, Math.round(image.width * scale))
+	canvas.height = Math.max(1, Math.round(image.height * scale))
+
+	const context = canvas.getContext("2d", { willReadFrequently: true })
+	context.drawImage(image, 0, 0, canvas.width, canvas.height)
+	const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+	const buckets = new Map()
+	const step = Math.max(4, Math.floor(pixels.length / 4 / 12000) * 4)
+
+	for (let index = 0; index < pixels.length; index += step) {
+		const alpha = pixels[index + 3]
+		if (alpha < 180) continue
+		const r = pixels[index]
+		const g = pixels[index + 1]
+		const b = pixels[index + 2]
+		const key = `${r >> 4},${g >> 4},${b >> 4}`
+		const bucket = buckets.get(key) || { r: 0, g: 0, b: 0, count: 0 }
+		bucket.r += r
+		bucket.g += g
+		bucket.b += b
+		bucket.count += 1
+		buckets.set(key, bucket)
+	}
+
+	const candidates = [...buckets.values()]
+		.map((bucket) => {
+			const r = Math.round(bucket.r / bucket.count)
+			const g = Math.round(bucket.g / bucket.count)
+			const b = Math.round(bucket.b / bucket.count)
+			const [h, s, l] = rgbToHsl(r, g, b)
+			return { r, g, b, h, s, l, count: bucket.count, score: bucket.count * (0.72 + s * 0.5) }
+		})
+		.sort((a, b) => b.score - a.score)
+
+	const selected = []
+	for (const threshold of [82, 64, 48, 32, 0]) {
+		for (const color of candidates) {
+			if (selected.length >= count) break
+			if (selected.some((picked) => colorDistance(color, picked) < threshold)) continue
+			selected.push(color)
+		}
+		if (selected.length >= count) break
+	}
+
+	while (selected.length < count) {
+		selected.push(selected[selected.length - 1] || { r: 240, g: 240, b: 240 })
+	}
+
+	return selected.slice(0, count).map(({ r, g, b }) => rgbToHex(r, g, b))
+}
+
+function loadImage(file) {
+	return new Promise((resolve, reject) => {
+		const url = URL.createObjectURL(file)
+		const image = new Image()
+		image.onload = () => {
+			URL.revokeObjectURL(url)
+			resolve(image)
+		}
+		image.onerror = () => {
+			URL.revokeObjectURL(url)
+			reject(new Error("Unable to load image."))
+		}
+		image.src = url
+	})
+}
+
+function renderPalettePreview(container, colors) {
+	container.innerHTML = ""
+	container.classList.remove("hidden")
+	container.classList.add("flex")
+	colors.forEach((hex) => {
+		const swatch = document.createElement("div")
+		swatch.setAttribute("class", "h-8 flex-1 rounded-lg border border-white/70 shadow-sm")
+		swatch.style.background = hex
+		container.appendChild(swatch)
+	})
+}
+
+function rgbToHex(r, g, b) {
+	return `#${[r, g, b].map((value) => value.toString(16).padStart(2, "0")).join("").toUpperCase()}`
+}
+
+function rgbToHsl(r, g, b) {
+	r /= 255
+	g /= 255
+	b /= 255
+	const max = Math.max(r, g, b)
+	const min = Math.min(r, g, b)
+	let h = 0
+	let s = 0
+	const l = (max + min) / 2
+	if (max !== min) {
+		const d = max - min
+		s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+		switch (max) {
+			case r:
+				h = (g - b) / d + (g < b ? 6 : 0)
+				break
+			case g:
+				h = (b - r) / d + 2
+				break
+			default:
+				h = (r - g) / d + 4
+		}
+		h /= 6
+	}
+	return [h, s, l]
+}
+
+function colorDistance(a, b) {
+	return Math.hypot(a.r - b.r, a.g - b.g, a.b - b.b)
 }
 
 function listOptions(bg, options) {
@@ -349,10 +565,11 @@ export function getBgTypeFromUrl(Bgs) {
 					return item.name === value
 				})
 				if (!Bg) return false
+				const paletteState = getStoredPaletteState(Bg.palette)
 
 				const colorbg = new Bg.class({
 					dom: "box", // DOM that you want to add color background
-					colors: Colors[Bg.palette], // 6 Hex colors
+					colors: paletteState.colors, // 6 Hex colors
 					seed: 1000, // Random seed
 					loop: true // Whether the background would be loop animated
 				})
