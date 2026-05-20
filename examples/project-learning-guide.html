@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>color4bg.js 项目读懂路线</title>
+	<script src="../build/js/AmbientLightBg.min.js"></script>
+	<style>
+		:root {
+			color-scheme: light;
+			--ink: #171717;
+			--muted: #616161;
+			--line: #dedbd2;
+			--paper: #fbfaf6;
+			--panel: rgba(255, 255, 255, 0.82);
+			--aqua: #31b7b7;
+			--coral: #e56b5f;
+			--gold: #c89533;
+			--leaf: #528f5d;
+			--violet: #7a6fc7;
+			--shadow: 0 18px 50px rgba(32, 28, 18, 0.12);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html {
+			scroll-behavior: smooth;
+		}
+
+		body {
+			margin: 0;
+			font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+			color: var(--ink);
+			background: var(--paper);
+			line-height: 1.65;
+		}
+
+		a {
+			color: inherit;
+		}
+
+		.guide-hero {
+			position: relative;
+			min-height: 92vh;
+			overflow: hidden;
+			display: grid;
+			align-items: end;
+			padding: 32px;
+			background: #101010;
+		}
+
+		#guide-bg {
+			position: absolute;
+			inset: 0;
+		}
+
+		.guide-hero::after {
+			content: "";
+			position: absolute;
+			inset: 0;
+			background:
+				linear-gradient(90deg, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.2) 54%, rgba(0, 0, 0, 0.4)),
+				linear-gradient(0deg, rgba(251, 250, 246, 1) 0%, rgba(251, 250, 246, 0) 22%);
+			pointer-events: none;
+		}
+
+		.hero-inner {
+			position: relative;
+			z-index: 2;
+			width: min(1180px, 100%);
+			margin: 0 auto 40px;
+			color: #fff;
+		}
+
+		.kicker {
+			margin: 0 0 14px;
+			font-size: 14px;
+			letter-spacing: 0;
+			text-transform: uppercase;
+			color: rgba(255, 255, 255, 0.76);
+		}
+
+		h1 {
+			margin: 0;
+			max-width: 860px;
+			font-size: clamp(42px, 7vw, 88px);
+			line-height: 1.02;
+			letter-spacing: 0;
+			font-weight: 780;
+		}
+
+		.hero-copy {
+			max-width: 720px;
+			margin: 26px 0 0;
+			font-size: 19px;
+			color: rgba(255, 255, 255, 0.86);
+		}
+
+		.hero-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 12px;
+			margin-top: 28px;
+		}
+
+		.hero-actions a {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 44px;
+			padding: 10px 16px;
+			border: 1px solid rgba(255, 255, 255, 0.42);
+			border-radius: 8px;
+			text-decoration: none;
+			background: rgba(255, 255, 255, 0.14);
+			backdrop-filter: blur(12px);
+			font-weight: 650;
+		}
+
+		.hero-actions a.primary {
+			background: #fff;
+			color: #171717;
+			border-color: #fff;
+		}
+
+		.page-nav {
+			position: sticky;
+			top: 0;
+			z-index: 20;
+			background: rgba(251, 250, 246, 0.92);
+			backdrop-filter: blur(14px);
+			border-bottom: 1px solid var(--line);
+		}
+
+		.page-nav .nav-inner {
+			width: min(1180px, calc(100% - 32px));
+			margin: 0 auto;
+			display: flex;
+			gap: 10px;
+			overflow-x: auto;
+			padding: 10px 0;
+		}
+
+		.page-nav a {
+			white-space: nowrap;
+			text-decoration: none;
+			font-size: 14px;
+			padding: 8px 10px;
+			border-radius: 8px;
+			color: #303030;
+		}
+
+		.page-nav a:hover {
+			background: #ece8dd;
+		}
+
+		main {
+			width: min(1180px, calc(100% - 32px));
+			margin: 0 auto;
+		}
+
+		section {
+			padding: 64px 0;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.section-heading {
+			display: grid;
+			grid-template-columns: minmax(180px, 280px) 1fr;
+			gap: 36px;
+			margin-bottom: 28px;
+		}
+
+		.section-number {
+			color: var(--coral);
+			font-weight: 760;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: clamp(28px, 4vw, 46px);
+			line-height: 1.12;
+			letter-spacing: 0;
+		}
+
+		h3 {
+			margin: 0 0 10px;
+			font-size: 21px;
+			line-height: 1.25;
+			letter-spacing: 0;
+		}
+
+		p {
+			margin: 0 0 12px;
+		}
+
+		.lead {
+			font-size: 18px;
+			color: var(--muted);
+			max-width: 760px;
+		}
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: 18px;
+		}
+
+		.tile,
+		.route-step,
+		.code-map,
+		.glossary-item,
+		.practice-card,
+		.debug-card {
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			box-shadow: var(--shadow);
+		}
+
+		.tile {
+			padding: 22px;
+		}
+
+		.tile strong {
+			display: block;
+			margin-bottom: 8px;
+			color: var(--aqua);
+		}
+
+		.tile:nth-child(2n) strong {
+			color: var(--coral);
+		}
+
+		.tile:nth-child(3n) strong {
+			color: var(--leaf);
+		}
+
+		.file-map {
+			display: grid;
+			grid-template-columns: 1.1fr 0.9fr;
+			gap: 22px;
+			align-items: stretch;
+		}
+
+		.tree {
+			margin: 0;
+			padding: 22px;
+			overflow: auto;
+			background: #1c1b19;
+			color: #f1ede2;
+			border-radius: 8px;
+			font: 14px/1.72 Consolas, "SFMono-Regular", monospace;
+		}
+
+		.code-map {
+			padding: 22px;
+		}
+
+		.code-map ul,
+		.tile ul,
+		.route-step ul,
+		.practice-card ul,
+		.debug-card ul,
+		.checklist {
+			margin: 10px 0 0;
+			padding-left: 20px;
+		}
+
+		.code-snippet {
+			margin: 14px 0 0;
+			padding: 16px;
+			overflow-x: auto;
+			border-radius: 8px;
+			background: #1c1b19;
+			color: #f1ede2;
+			font: 14px/1.65 Consolas, "SFMono-Regular", monospace;
+		}
+
+		.reading-list {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 14px;
+		}
+
+		.reading-step {
+			display: grid;
+			grid-template-columns: 180px 1fr 1fr 1fr;
+			gap: 14px;
+			align-items: start;
+			padding: 18px;
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			background: rgba(255, 255, 255, 0.72);
+		}
+
+		.reading-step strong {
+			color: var(--aqua);
+		}
+
+		.reading-step p {
+			margin: 0;
+		}
+
+		.pipeline {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			gap: 12px;
+			margin-top: 24px;
+		}
+
+		.pipeline-step {
+			padding: 16px;
+			min-height: 150px;
+			border-radius: 8px;
+			border: 1px solid var(--line);
+			background: #fff;
+		}
+
+		.pipeline-step strong {
+			display: block;
+			color: var(--leaf);
+			margin-bottom: 8px;
+		}
+
+		.practice-grid,
+		.debug-grid {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 16px;
+		}
+
+		.practice-card,
+		.debug-card {
+			padding: 20px;
+		}
+
+		.meta-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin: 12px 0;
+		}
+
+		.meta {
+			display: inline-flex;
+			align-items: center;
+			min-height: 28px;
+			padding: 4px 9px;
+			border-radius: 999px;
+			background: #ece8dd;
+			color: #3a3832;
+			font-size: 13px;
+		}
+
+		.visual-strip {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			gap: 10px;
+			margin-top: 28px;
+		}
+
+		.visual-strip figure {
+			margin: 0;
+			position: relative;
+			overflow: hidden;
+			border-radius: 8px;
+			border: 1px solid var(--line);
+			background: #fff;
+		}
+
+		.visual-strip img {
+			width: 100%;
+			aspect-ratio: 1.2;
+			object-fit: cover;
+			display: block;
+		}
+
+		.visual-strip figcaption {
+			padding: 8px;
+			font-size: 12px;
+			color: var(--muted);
+			background: #fff;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.roadmap {
+			display: grid;
+			grid-template-columns: repeat(4, 1fr);
+			gap: 16px;
+			counter-reset: step;
+		}
+
+		.route-step {
+			padding: 22px;
+			position: relative;
+		}
+
+		.route-step::before {
+			counter-increment: step;
+			content: counter(step);
+			display: inline-flex;
+			width: 34px;
+			height: 34px;
+			align-items: center;
+			justify-content: center;
+			border-radius: 50%;
+			background: var(--ink);
+			color: #fff;
+			font-weight: 760;
+			margin-bottom: 18px;
+		}
+
+		.two-col {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 18px;
+		}
+
+		.badge-row {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-top: 18px;
+		}
+
+		.badge {
+			display: inline-flex;
+			align-items: center;
+			min-height: 34px;
+			padding: 5px 10px;
+			border-radius: 999px;
+			background: #ece8dd;
+			border: 1px solid var(--line);
+			font-size: 14px;
+		}
+
+		.callout {
+			margin-top: 26px;
+			padding: 20px 22px;
+			border-left: 5px solid var(--gold);
+			background: #fff7df;
+			border-radius: 8px;
+		}
+
+		.glossary {
+			display: grid;
+			grid-template-columns: repeat(2, 1fr);
+			gap: 14px;
+		}
+
+		.glossary-item {
+			padding: 18px;
+		}
+
+		.glossary-term {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: baseline;
+			gap: 8px;
+			margin-bottom: 12px;
+		}
+
+		.glossary-term strong {
+			font-size: 21px;
+			line-height: 1.2;
+		}
+
+		.full-name {
+			color: var(--muted);
+			font-size: 14px;
+		}
+
+		.term-block {
+			margin-top: 12px;
+		}
+
+		.term-block b {
+			color: var(--coral);
+		}
+
+		.footer {
+			padding: 44px 0 72px;
+			color: var(--muted);
+		}
+
+		code {
+			padding: 2px 6px;
+			border-radius: 6px;
+			background: #ece8dd;
+			font-family: Consolas, "SFMono-Regular", monospace;
+			font-size: 0.94em;
+		}
+
+		@media (max-width: 920px) {
+			.guide-hero {
+				padding: 22px;
+				min-height: 88vh;
+			}
+
+			.section-heading,
+			.file-map,
+			.two-col,
+			.reading-step {
+				grid-template-columns: 1fr;
+			}
+
+			.grid,
+			.roadmap,
+			.pipeline,
+			.practice-grid,
+			.debug-grid {
+				grid-template-columns: repeat(2, 1fr);
+			}
+
+			.visual-strip {
+				grid-template-columns: repeat(3, 1fr);
+			}
+		}
+
+		@media (max-width: 620px) {
+			.guide-hero {
+				padding: 18px;
+			}
+
+			.hero-copy {
+				font-size: 17px;
+			}
+
+			.grid,
+			.roadmap,
+			.pipeline,
+			.practice-grid,
+			.debug-grid,
+			.glossary {
+				grid-template-columns: 1fr;
+			}
+
+			.visual-strip {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+	</style>
+</head>
+<body>
+	<header class="guide-hero" id="top">
+		<div id="guide-bg"></div>
+		<div class="hero-inner">
+			<p class="kicker">color4bg.js learning guide</p>
+			<h1>从计算机基础到读懂一个 WebGL 动态背景库</h1>
+			<p class="hero-copy">这是一份给“有计算机基础，但还没系统读过前端图形项目”的学习路线。目标不是一口气学完所有理论，而是知道每个目录、每段代码、每个构建工具背后的知识地图。</p>
+			<div class="hero-actions">
+				<a class="primary" href="#map">看知识地图</a>
+				<a href="#route">按路线学习</a>
+				<a href="./demo-module-js.html">打开原项目 Demo</a>
+				<a href="./video-export.html">打开视频导出工具</a>
+			</div>
+		</div>
+	</header>
+
+	<nav class="page-nav" aria-label="页面导航">
+		<div class="nav-inner">
+			<a href="#project">项目是什么</a>
+			<a href="#structure">目录结构</a>
+			<a href="#map">知识地图</a>
+			<a href="#graphics">图形学重点</a>
+			<a href="#preview">本地预览</a>
+			<a href="#source-route">源码路线</a>
+			<a href="#effect-breakdown">效果拆解</a>
+			<a href="#practice">动手任务</a>
+			<a href="#troubleshooting">排查问题</a>
+			<a href="#route">学习路线</a>
+			<a href="#check">自测清单</a>
+			<a href="#glossary">术语表</a>
+		</div>
+	</nav>
+
+	<main>
+		<section id="project">
+			<div class="section-heading">
+				<div class="section-number">01 / 项目定位</div>
+				<div>
+					<h2>这个项目不是普通网页，而是一个前端图形库</h2>
+					<p class="lead">color4bg.js 的核心功能是：用 JavaScript 调用 WebGL，在浏览器里实时生成动态抽象背景。它既包含“库源码”，也包含“打包产物”和“示例页面”。</p>
+				</div>
+			</div>
+			<div class="grid">
+				<article class="tile">
+					<strong>你看到的效果</strong>
+					<p>彩色流体、模糊渐变、网格阵列、随机方块、曲线波纹等背景，是由 canvas 和 GPU 着色器共同绘制出来的。</p>
+				</article>
+				<article class="tile">
+					<strong>你要读的代码</strong>
+					<p>不是只读 HTML。重点要看 <code>src/color4bg</code> 里的基类、各背景子类，以及 shader 字符串如何被送进 WebGL。</p>
+				</article>
+				<article class="tile">
+					<strong>你要理解的工程</strong>
+					<p>项目用 npm 管理依赖，用 Rollup 打包，用 ES Module 组织源码，还额外维护了 React 组件封装。</p>
+				</article>
+			</div>
+			<div class="visual-strip" aria-label="项目背景类型示例">
+				<figure><img src="./assets/images/abstract-shape.jpg" alt="abstract-shape 背景缩略图"><figcaption>abstract-shape</figcaption></figure>
+				<figure><img src="./assets/images/aesthetic-fluid.jpg" alt="aesthetic-fluid 背景缩略图"><figcaption>aesthetic-fluid</figcaption></figure>
+				<figure><img src="./assets/images/ambient-light.jpg" alt="ambient-light 背景缩略图"><figcaption>ambient-light</figcaption></figure>
+				<figure><img src="./assets/images/curve-gradient.jpg" alt="curve-gradient 背景缩略图"><figcaption>curve-gradient</figcaption></figure>
+				<figure><img src="./assets/images/grid-array.jpg" alt="grid-array 背景缩略图"><figcaption>grid-array</figcaption></figure>
+				<figure><img src="./assets/images/wavy-waves.jpg" alt="wavy-waves 背景缩略图"><figcaption>wavy-waves</figcaption></figure>
+			</div>
+		</section>
+
+		<section id="structure">
+			<div class="section-heading">
+				<div class="section-number">02 / 目录结构</div>
+				<div>
+					<h2>先分清“源码、产物、示例、封装”四类文件</h2>
+					<p class="lead">读项目时最怕把所有文件都当成同一层级。这个仓库可以按用途切成四块：源码在 <code>src</code>，构建结果在 <code>build</code>，体验入口在 <code>examples</code>，React 封装在 <code>packages/react</code>。</p>
+				</div>
+			</div>
+			<div class="file-map">
+				<pre class="tree">color4bg.js/
+├─ src/
+│  ├─ color4bg/
+│  │  ├─ ColorBg.js
+│  │  ├─ AbstractBackground/
+│  │  └─ SimpleBackground/
+│  └─ ogl/
+├─ build/
+│  ├─ js/
+│  └─ jsm/
+├─ examples/
+│  ├─ demo-module-js.html
+│  ├─ demo-embed-js.html
+│  ├─ data.js
+│  └─ ui.js
+├─ packages/react/
+├─ index.js
+├─ package.json
+└─ rollup.config.js</pre>
+				<article class="code-map">
+					<h3>推荐阅读顺序</h3>
+					<ul>
+						<li>先打开 <code>examples/demo-module-js.html</code>，看页面如何创建一个背景实例。</li>
+						<li>再看 <code>examples/data.js</code>，理解所有背景类型如何被注册成列表。</li>
+						<li>接着看 <code>index.js</code>，确认库对外导出了哪些类。</li>
+						<li>然后读 <code>src/color4bg/ColorBg.js</code>，掌握通用生命周期。</li>
+						<li>最后挑一个背景类，例如 <code>CurveGradientBg.js</code>，顺着 shader、uniform、update 方法读下去。</li>
+					</ul>
+				</article>
+			</div>
+		</section>
+
+		<section id="map">
+			<div class="section-heading">
+				<div class="section-number">03 / 知识地图</div>
+				<div>
+					<h2>要看懂它，需要六组知识，而不是只学一种语言</h2>
+					<p class="lead">一个前端图形库横跨工程管理、浏览器、JavaScript、图形学、构建发布和框架封装。你不必先成为专家，但要知道问题属于哪一层。</p>
+				</div>
+			</div>
+			<div class="grid">
+				<article class="tile">
+					<strong>项目开发管理</strong>
+					<p>要理解 Git、GitHub、fork、clone、commit、branch、npm 包版本、MIT License、README、CHANGELOG。</p>
+					<ul>
+						<li>能分辨自己仓库和上游仓库</li>
+						<li>能看懂 <code>package.json</code> 的 scripts 和 dependencies</li>
+						<li>知道源码和构建产物的关系</li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>前端基础</strong>
+					<p>要知道 HTML 提供结构，CSS 控制布局，DOM 是 JS 操作页面的对象模型，canvas 是图形绘制入口。</p>
+					<ul>
+						<li><code>document.getElementById</code></li>
+						<li><code>appendChild</code></li>
+						<li>响应式布局和浏览器开发者工具</li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>JavaScript 语言</strong>
+					<p>项目大量使用 class、constructor、继承、import/export、对象参数、数组、回调和浏览器事件。</p>
+					<ul>
+						<li>理解 <code>new CurveGradientBg(...)</code></li>
+						<li>理解 <code>extends ColorBg</code></li>
+						<li>理解 <code>requestAnimationFrame</code></li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>WebGL 和图形学</strong>
+					<p>要知道 canvas 只是画布，真正的像素计算发生在 GPU 运行的 shader 里。</p>
+					<ul>
+						<li>Renderer、Camera、Scene、Mesh、Program</li>
+						<li>顶点着色器和片元着色器</li>
+						<li>uniform、纹理、噪声、动画时间</li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>构建和发布</strong>
+					<p>源码不能总是原样给浏览器或 npm 用户使用，所以项目用 Rollup 输出两类文件。</p>
+					<ul>
+						<li><code>build/js</code> 给 script 标签使用</li>
+						<li><code>build/jsm</code> 给 ES Module 使用</li>
+						<li><code>npm run build</code> 重新生成产物</li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>React 封装</strong>
+					<p><code>packages/react</code> 把命令式的背景类包装成组件，让 React 项目用属性传入 style、colors、loop、seed。</p>
+					<ul>
+						<li>理解组件生命周期</li>
+						<li>理解 ref 指向 DOM 容器</li>
+						<li>理解卸载时 destroy 释放 canvas</li>
+					</ul>
+				</article>
+			</div>
+		</section>
+
+		<section id="graphics">
+			<div class="section-heading">
+				<div class="section-number">04 / 图形学重点</div>
+				<div>
+					<h2>读这个项目的图形代码，要抓住一条渲染链路</h2>
+					<p class="lead">不用一开始就推导所有噪声函数。先记住：页面创建背景类，背景类创建 WebGL 资源，shader 计算颜色，动画循环不断更新 uniform，最后 canvas 显示结果。</p>
+				</div>
+			</div>
+			<div class="two-col">
+				<article class="tile">
+					<strong>从页面到像素</strong>
+					<ul>
+						<li>HTML 里有一个容器，例如 <code>#box</code>。</li>
+						<li>JS 创建 <code>new CurveGradientBg({ dom: "box" })</code>。</li>
+						<li><code>ColorBg</code> 创建 canvas 并插入容器。</li>
+						<li>背景子类创建几何体、材质、shader 和 uniform。</li>
+						<li>浏览器每帧调用 <code>requestAnimationFrame</code>。</li>
+						<li>GPU 执行 shader，把每个像素算成某种颜色。</li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>重点概念</strong>
+					<ul>
+						<li><code>Mesh</code>：要绘制的对象，通常是一张覆盖画布的平面。</li>
+						<li><code>Program</code>：WebGL 着色器程序。</li>
+						<li><code>Uniform</code>：JS 传给 shader 的变量，例如颜色、时间、速度。</li>
+						<li><code>RenderTarget</code>：先画到一张纹理，再把纹理画到屏幕。</li>
+						<li><code>Seed</code>：让随机图案可复现。</li>
+					</ul>
+				</article>
+			</div>
+			<div class="callout">
+				<strong>读 shader 的技巧：</strong>先找 <code>uniform</code>，再找 <code>main()</code>，最后再看噪声、插值、颜色混合函数。不要从数学工具函数第一行开始硬啃。
+			</div>
+		</section>
+
+		<section id="preview">
+			<div class="section-heading">
+				<div class="section-number">05 / 本地预览</div>
+				<div>
+					<h2>正确打开 demo：先启动本地 HTTP 服务</h2>
+					<p class="lead">这个项目的完整本地入口是 <code>examples/demo-module-js.html</code>，但它使用了 ES Module。直接双击 HTML 变成 <code>file://</code> 访问时，浏览器可能会因为安全限制拦截模块加载，所以页面看起来像“没演示、没交互”。</p>
+				</div>
+			</div>
+			<div class="two-col">
+				<article class="tile">
+					<strong>推荐打开方式</strong>
+					<p>在项目根目录启动一个最简单的静态服务：</p>
+					<pre class="code-snippet">cd D:\Documents\Desktop\color4bg\color4bg.js
+python -m http.server 8000</pre>
+					<p>然后在浏览器打开：</p>
+					<pre class="code-snippet">http://127.0.0.1:8000/examples/demo-module-js.html</pre>
+				</article>
+				<article class="tile">
+					<strong>为什么这样才稳定</strong>
+					<ul>
+						<li><code>http://127.0.0.1</code> 会让浏览器把它当成一个正常网站。</li>
+						<li>ES Module 的 <code>import</code> 路径可以按网页规则加载。</li>
+						<li>图片、JS 模块、构建文件都能从同一个项目目录取到。</li>
+						<li>控制台报错也更容易定位，不会混进 <code>file://</code> 的限制问题。</li>
+					</ul>
+				</article>
+			</div>
+			<div class="callout">
+				<strong>先记住这一点：</strong>这个项目的示例页不是普通静态说明页，而是会加载模块、图片和 WebGL 代码的前端应用页面。遇到空白页，第一步先确认是不是通过 HTTP 服务打开。
+			</div>
+		</section>
+
+		<section id="source-route">
+			<div class="section-heading">
+				<div class="section-number">06 / 源码路线</div>
+				<div>
+					<h2>第一次读源码，不要从最底层 WebGL 开始</h2>
+					<p class="lead">更好的顺序是先看“页面怎么用它”，再看“库对外暴露什么”，最后才进入“背景效果怎么画”。这样读起来像顺着水流走，不会一上来就被 shader 和矩阵吓住。</p>
+				</div>
+			</div>
+			<div class="reading-list">
+				<div class="reading-step">
+					<strong>1. examples/demo-module-js.html</strong>
+					<p><b>看什么：</b>页面容器 <code>#box</code>、模块导入、<code>new CurveGradientBg(...)</code>。</p>
+					<p><b>先跳过：</b>页面上 Tailwind 类名的细节。</p>
+					<p><b>读懂后：</b>知道 demo 是如何创建一个背景实例的。</p>
+				</div>
+				<div class="reading-step">
+					<strong>2. examples/data.js</strong>
+					<p><b>看什么：</b><code>Colors</code>、<code>Bgs</code>、<code>Options</code> 三组数据。</p>
+					<p><b>先跳过：</b>每个 slider 的具体数值是否最好。</p>
+					<p><b>读懂后：</b>知道左侧背景列表和右侧参数面板从哪里来。</p>
+				</div>
+				<div class="reading-step">
+					<strong>3. examples/ui.js</strong>
+					<p><b>看什么：</b>如何生成列表、如何切换调色板、如何把滑块值传给 <code>bg.update</code>。</p>
+					<p><b>先跳过：</b>动画展开菜单的小交互细节。</p>
+					<p><b>读懂后：</b>知道 demo 的交互层如何驱动背景对象。</p>
+				</div>
+				<div class="reading-step">
+					<strong>4. index.js</strong>
+					<p><b>看什么：</b>项目对外导出了哪些背景类。</p>
+					<p><b>先跳过：</b>每个类内部怎么画。</p>
+					<p><b>读懂后：</b>知道使用者能从 <code>color4bg</code> 里 import 什么。</p>
+				</div>
+				<div class="reading-step">
+					<strong>5. src/color4bg/ColorBg.js</strong>
+					<p><b>看什么：</b>canvas 创建、颜色处理、seed、resize、动画循环、destroy。</p>
+					<p><b>先跳过：</b>OGL 内部实现。</p>
+					<p><b>读懂后：</b>知道所有背景类共享的生命周期。</p>
+				</div>
+				<div class="reading-step">
+					<strong>6. 一个具体背景类</strong>
+					<p><b>看什么：</b><code>_makeMaterial</code>、<code>_make</code>、<code>_animate</code>、<code>update</code>。</p>
+					<p><b>先跳过：</b>复杂噪声函数的数学推导。</p>
+					<p><b>读懂后：</b>知道一个背景效果如何从参数变成画面。</p>
+				</div>
+			</div>
+		</section>
+
+		<section id="effect-breakdown">
+			<div class="section-heading">
+				<div class="section-number">07 / 效果拆解</div>
+				<div>
+					<h2>拿 CurveGradientBg 走一遍完整链路</h2>
+					<p class="lead">把一个背景效果拆开看，它不是“神秘地画出来”，而是六步：页面创建实例、找到 DOM、放入 canvas、准备 WebGL 程序、把颜色和参数传进去、每帧更新画面。</p>
+				</div>
+			</div>
+			<div class="pipeline">
+				<div class="pipeline-step"><strong>创建实例</strong><p>demo 里执行 <code>new CurveGradientBg({ ... })</code>，这一步相当于告诉项目“我要一个曲线渐变背景”。</p></div>
+				<div class="pipeline-step"><strong>挂载 DOM</strong><p><code>dom: "box"</code> 表示把背景放进 id 为 <code>box</code> 的元素里，而不是随便画到页面上。</p></div>
+				<div class="pipeline-step"><strong>创建 canvas</strong><p><code>ColorBg</code> 会自动创建 WebGL canvas，并把它作为绝对定位元素插入容器。</p></div>
+				<div class="pipeline-step"><strong>准备程序</strong><p>背景类创建 <code>Program</code>，里面包含 vertex shader 和 fragment shader。</p></div>
+				<div class="pipeline-step"><strong>传入参数</strong><p>颜色、时间、噪声强度、缩放等值会变成 shader 的 <code>uniform</code>。</p></div>
+				<div class="pipeline-step"><strong>循环绘制</strong><p><code>requestAnimationFrame</code> 每帧触发，loop 为 true 时更新时间，画面就动起来。</p></div>
+			</div>
+			<div class="two-col" style="margin-top: 18px;">
+				<article class="tile">
+					<strong>你应该重点看懂的代码形状</strong>
+					<pre class="code-snippet">new CurveGradientBg({
+  dom: "box",
+  colors: ["#FE8BFC", "#BD9FFB", "#8EDBFD"],
+  seed: 1000,
+  loop: true
+})</pre>
+				</article>
+				<article class="tile">
+					<strong>它背后的意思</strong>
+					<ul>
+						<li><code>dom</code> 决定画在哪里。</li>
+						<li><code>colors</code> 决定基础调色板。</li>
+						<li><code>seed</code> 决定随机图案是否可复现。</li>
+						<li><code>loop</code> 决定是否每帧改变时间参数。</li>
+					</ul>
+				</article>
+			</div>
+		</section>
+
+		<section id="practice">
+			<div class="section-heading">
+				<div class="section-number">08 / 动手任务</div>
+				<div>
+					<h2>从最小修改开始，建立“我能控制它”的感觉</h2>
+					<p class="lead">下面这些任务都很小，但能帮你把页面、数据、UI 和图形参数串起来。每次只改一处，刷新页面观察变化。</p>
+				</div>
+			</div>
+			<div class="practice-grid">
+				<article class="practice-card">
+					<h3>任务 1：修改默认颜色</h3>
+					<div class="meta-row"><span class="meta">位置：examples/demo-module-js.html</span><span class="meta">难度：低</span></div>
+					<p>找到默认 <code>colors</code> 数组，把其中几个十六进制颜色换成你喜欢的颜色。</p>
+					<ul>
+						<li>预期效果：背景主色调改变。</li>
+						<li>观察方式：刷新 demo，看画面颜色是否变化。</li>
+					</ul>
+				</article>
+				<article class="practice-card">
+					<h3>任务 2：修改标题文字</h3>
+					<div class="meta-row"><span class="meta">位置：examples/demo-module-js.html</span><span class="meta">难度：低</span></div>
+					<p>找到页面里的 <code>&lt;h1&gt;Color4Bg&lt;/h1&gt;</code>，改成自己的标题。</p>
+					<ul>
+						<li>预期效果：背景上方的大字改变。</li>
+						<li>观察方式：刷新页面，看文字是否更新。</li>
+					</ul>
+				</article>
+				<article class="practice-card">
+					<h3>任务 3：改变 loop</h3>
+					<div class="meta-row"><span class="meta">位置：examples/demo-module-js.html</span><span class="meta">难度：低</span></div>
+					<p>把 <code>loop: true</code> 改成 <code>loop: false</code>。</p>
+					<ul>
+						<li>预期效果：背景变成静态图案，或停止持续变化。</li>
+						<li>观察方式：等待几秒，确认画面不再流动。</li>
+					</ul>
+				</article>
+				<article class="practice-card">
+					<h3>任务 4：改变 seed</h3>
+					<div class="meta-row"><span class="meta">位置：examples/demo-module-js.html</span><span class="meta">难度：低</span></div>
+					<p>把 <code>seed: 1000</code> 改成另一个数字，比如 <code>seed: 2026</code>。</p>
+					<ul>
+						<li>预期效果：同一种背景生成不同图案。</li>
+						<li>观察方式：刷新后比较图案形状是否变化。</li>
+					</ul>
+				</article>
+				<article class="practice-card">
+					<h3>任务 5：理解一个 UI 参数</h3>
+					<div class="meta-row"><span class="meta">位置：examples/data.js 与 ui.js</span><span class="meta">难度：中</span></div>
+					<p>在 <code>Options</code> 里找某个背景的 slider，例如 <code>speed</code>。再到对应背景类里找 <code>update(option, val)</code>。</p>
+					<ul>
+						<li>预期效果：知道 slider 的值最后如何影响 WebGL 参数。</li>
+						<li>观察方式：拖动参数面板里的滑块，看动画速度或形态是否变化。</li>
+					</ul>
+				</article>
+				<article class="practice-card">
+					<h3>任务 6：只改一个背景类型</h3>
+					<div class="meta-row"><span class="meta">位置：examples/data.js</span><span class="meta">难度：中</span></div>
+					<p>把某个背景条目的 <code>palette</code> 改成另一个已有调色板名称，例如从 <code>pastel</code> 改成 <code>blue</code>。</p>
+					<ul>
+						<li>预期效果：左侧点击该背景时，默认颜色组改变。</li>
+						<li>观察方式：切换到对应背景，看初始配色是否变化。</li>
+					</ul>
+				</article>
+			</div>
+		</section>
+
+		<section id="troubleshooting">
+			<div class="section-heading">
+				<div class="section-number">09 / 排查问题</div>
+				<div>
+					<h2>页面不动时，按现象一步步查</h2>
+					<p class="lead">前端图形项目的错误可能来自路径、模块、浏览器安全策略、WebGL 支持或源码与构建产物不一致。先看浏览器控制台，再对照下面的现象。</p>
+				</div>
+			</div>
+			<div class="debug-grid">
+				<article class="debug-card">
+					<h3>页面空白</h3>
+					<ul>
+						<li>先确认访问地址是 <code>http://127.0.0.1:8000/...</code>，不是 <code>file://</code>。</li>
+						<li>打开控制台，看是否有 module、CORS、404 报错。</li>
+						<li>确认命令是在项目根目录执行的。</li>
+					</ul>
+				</article>
+				<article class="debug-card">
+					<h3>左侧列表有，但背景不动</h3>
+					<ul>
+						<li>确认当前背景配置里 <code>loop</code> 是 <code>true</code>。</li>
+						<li>确认没有打开系统或浏览器的省电限制。</li>
+						<li>在控制台看是否有 WebGL 或 shader 编译错误。</li>
+					</ul>
+				</article>
+				<article class="debug-card">
+					<h3>控制台报 module/CORS 错误</h3>
+					<ul>
+						<li>这通常是直接双击 HTML 导致的。</li>
+						<li>用 <code>python -m http.server 8000</code> 启动服务后重新访问。</li>
+						<li>不要把单个 HTML 文件移出项目目录单独打开。</li>
+					</ul>
+				</article>
+				<article class="debug-card">
+					<h3>图片不显示</h3>
+					<ul>
+						<li>确认 <code>examples/assets/images</code> 目录还在。</li>
+						<li>确认访问路径没有多一层或少一层目录。</li>
+						<li>控制台 Network 面板里看图片请求是否是 404。</li>
+					</ul>
+				</article>
+				<article class="debug-card">
+					<h3>修改源码后效果没变化</h3>
+					<ul>
+						<li>如果 demo 引用的是 <code>build/jsm</code>，改 <code>src</code> 后可能需要重新构建。</li>
+						<li>如果 demo 直接 import <code>src</code>，刷新页面即可看到变化。</li>
+						<li>浏览器缓存影响时，可以强制刷新。</li>
+					</ul>
+				</article>
+				<article class="debug-card">
+					<h3>WebGL 不支持或被禁用</h3>
+					<ul>
+						<li>换 Chrome、Edge 等现代浏览器测试。</li>
+						<li>检查浏览器硬件加速是否开启。</li>
+						<li>如果设备显卡驱动异常，WebGL 背景可能无法正常渲染。</li>
+					</ul>
+				</article>
+			</div>
+		</section>
+
+		<section id="route">
+			<div class="section-heading">
+				<div class="section-number">10 / 学习路线</div>
+				<div>
+					<h2>四周入门路线：能运行、能修改、能解释、能扩展</h2>
+					<p class="lead">这条路线面向已经懂基本编程概念的人。目标是读懂项目开发方式，而不是把所有图形学公式学到研究生水平。</p>
+				</div>
+			</div>
+			<div class="roadmap">
+				<article class="route-step">
+					<h3>第 1 周：前端运行模型</h3>
+					<p>学会用本地 HTTP 服务打开示例，理解 HTML、CSS、DOM、canvas、浏览器控制台。</p>
+					<ul>
+						<li>修改标题文字</li>
+						<li>替换颜色数组</li>
+						<li>观察控制台报错</li>
+					</ul>
+				</article>
+				<article class="route-step">
+					<h3>第 2 周：JavaScript 和工程结构</h3>
+					<p>读懂 import/export、class、继承、构造函数、npm scripts、Rollup 构建产物。</p>
+					<ul>
+						<li>读 <code>index.js</code></li>
+						<li>读 <code>package.json</code></li>
+						<li>运行 <code>npm install</code></li>
+					</ul>
+				</article>
+				<article class="route-step">
+					<h3>第 3 周：WebGL 基础</h3>
+					<p>理解渲染器、相机、几何体、材质、shader、uniform 和动画循环。</p>
+					<ul>
+						<li>读 <code>ColorBg.js</code></li>
+						<li>读一个背景子类</li>
+						<li>改一个 uniform 默认值</li>
+					</ul>
+				</article>
+				<article class="route-step">
+					<h3>第 4 周：扩展一个功能</h3>
+					<p>尝试新增一个调节项，或复制一个背景类做小改动，再重新构建。</p>
+					<ul>
+						<li>给 UI 加一个 slider</li>
+						<li>把参数传进 update</li>
+						<li>打包并测试 demo</li>
+					</ul>
+				</article>
+			</div>
+		</section>
+
+		<section id="check">
+			<div class="section-heading">
+				<div class="section-number">11 / 自测清单</div>
+				<div>
+					<h2>如果这些问题能答上来，就基本能读这个项目</h2>
+					<p class="lead">不用背答案。每个问题都能在项目里找到对应文件，用它们检查自己是否真的理解了代码的层次。</p>
+				</div>
+			</div>
+			<div class="two-col">
+				<article class="tile">
+					<strong>工程问题</strong>
+					<ul class="checklist">
+						<li><code>build/js</code> 和 <code>build/jsm</code> 有什么区别？</li>
+						<li>为什么 <code>demo-module-js.html</code> 最好通过 HTTP 服务打开？</li>
+						<li><code>package.json</code> 的 <code>main</code>、<code>module</code>、<code>exports</code> 分别服务谁？</li>
+						<li>如果你修改了 <code>src</code>，为什么可能还需要重新 build？</li>
+					</ul>
+				</article>
+				<article class="tile">
+					<strong>代码问题</strong>
+					<ul class="checklist">
+						<li><code>ColorBg</code> 负责哪些通用工作？</li>
+						<li>一个具体背景类为什么要实现 <code>_makeMaterial</code> 和 <code>_make</code>？</li>
+						<li><code>loop</code> 为 true 时每帧发生了什么？</li>
+						<li>颜色数组是如何变成 shader 里的 <code>u_color_0</code> 等 uniform 的？</li>
+					</ul>
+				</article>
+			</div>
+			<div class="badge-row">
+				<span class="badge">Git / GitHub</span>
+				<span class="badge">npm</span>
+				<span class="badge">ES Module</span>
+				<span class="badge">DOM</span>
+				<span class="badge">Canvas</span>
+				<span class="badge">WebGL</span>
+				<span class="badge">GLSL</span>
+				<span class="badge">Rollup</span>
+				<span class="badge">React</span>
+			</div>
+		</section>
+
+		<section id="glossary">
+			<div class="section-heading">
+				<div class="section-number">12 / 术语表</div>
+				<div>
+					<h2>先把项目里反复出现的词认熟</h2>
+					<p class="lead">很多“看不懂”不是代码难，而是术语没有落地。下面这些词会在源码、构建文件和图形代码里反复出现。</p>
+				</div>
+			</div>
+			<div class="glossary">
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>HTML</strong><span class="full-name">HyperText Markup Language，超文本标记语言</span></div>
+					<p class="term-block"><b>发展历程：</b>HTML 最早服务于网页文档发布，后来随着浏览器能力增强，逐步增加表单、多媒体、语义标签等能力。现在常说的 HTML5，不只是标签更新，也代表现代 Web 应用的基础平台。</p>
+					<p class="term-block"><b>基础解释：</b>HTML 像网页的骨架，用标签告诉浏览器“这里是标题、这里是段落、这里是按钮、这里是画布”。本项目的 demo 页面就是先用 HTML 放出容器，再让 JavaScript 把动态背景挂进去。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>CSS</strong><span class="full-name">Cascading Style Sheets，层叠样式表</span></div>
+					<p class="term-block"><b>发展历程：</b>早期网页样式常直接写在 HTML 标签里，维护很困难。CSS 出现后，结构和样式分离；后来又加入 Flex、Grid、动画、响应式布局等能力。</p>
+					<p class="term-block"><b>基础解释：</b>CSS 负责“长什么样”，例如颜色、字体、间距、布局、圆角。本教程页的大标题、卡片、导航栏、响应式排列，都是 CSS 控制的。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>DOM</strong><span class="full-name">Document Object Model，文档对象模型</span></div>
+					<p class="term-block"><b>发展历程：</b>网页一开始更像静态文档。为了让脚本能修改页面，浏览器把页面内容抽象成一棵对象树，这就是 DOM。后来 DOM API 成为前端交互的核心基础。</p>
+					<p class="term-block"><b>基础解释：</b>DOM 可以理解成浏览器眼里的“页面零件清单”。JavaScript 可以通过 <code>document.getElementById</code> 找到某个零件，再修改它、添加子元素或绑定点击事件。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>JavaScript</strong><span class="full-name">JavaScript，网页脚本语言</span></div>
+					<p class="term-block"><b>发展历程：</b>JavaScript 最初只是给网页加一点交互的小脚本语言。后来浏览器、Node.js、模块系统和工程工具发展起来，它变成了前端开发的主力语言，也能写服务端和工具脚本。</p>
+					<p class="term-block"><b>基础解释：</b>JavaScript 负责“让网页动起来”。在这个项目里，它读取颜色参数，创建 WebGL 渲染器，启动动画循环，还把用户在 demo 里调节的滑块值传给背景效果。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>ES Module</strong><span class="full-name">ECMAScript Module，JavaScript 标准模块系统</span></div>
+					<p class="term-block"><b>发展历程：</b>早期 JavaScript 没有官方模块机制，大项目常依赖全局变量或第三方规范。ES Module 后来成为语言标准，用 <code>import</code> 和 <code>export</code> 明确组织文件关系。</p>
+					<p class="term-block"><b>基础解释：</b>模块就像把一本书拆成章节。每个文件只导出自己想给别人用的内容，别的文件按需导入。本项目的 <code>index.js</code> 就把各种背景类统一导出。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>npm</strong><span class="full-name">Node Package Manager，Node 包管理器</span></div>
+					<p class="term-block"><b>发展历程：</b>随着 Node.js 和前端工程化发展，开发者需要共享和安装大量代码包，npm 成为 JavaScript 生态最常见的包管理和发布平台之一。</p>
+					<p class="term-block"><b>基础解释：</b>npm 像一个代码仓库和安装器。<code>package.json</code> 记录项目需要哪些依赖、有哪些脚本命令；<code>npm install</code> 会把依赖下载到本地。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>Canvas</strong><span class="full-name">HTML Canvas Element，HTML 画布元素</span></div>
+					<p class="term-block"><b>发展历程：</b>网页早期主要显示文字和图片。Canvas 出现后，网页可以直接绘制图形、游戏、图表和动画。后来它也成为 WebGL 输出图像的承载元素。</p>
+					<p class="term-block"><b>基础解释：</b>Canvas 像网页里的一块电子画布。普通 HTML 元素是“摆出来”的，Canvas 里的内容是“画出来”的。本项目会自动创建一个 canvas 放到指定 DOM 容器里。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>WebGL</strong><span class="full-name">Web Graphics Library，网页图形库</span></div>
+					<p class="term-block"><b>发展历程：</b>WebGL 基于 OpenGL ES 思想，把 GPU 图形能力带进浏览器。它让网页不用安装插件，也能做 3D、复杂动画、图像处理和实时视觉效果。</p>
+					<p class="term-block"><b>基础解释：</b>WebGL 是浏览器和显卡沟通的接口。普通 JS 在 CPU 上跑，WebGL 可以把大量像素计算交给 GPU，所以适合 color4bg.js 这种实时动态背景。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>GLSL</strong><span class="full-name">OpenGL Shading Language，OpenGL 着色语言</span></div>
+					<p class="term-block"><b>发展历程：</b>早期图形管线很多步骤是固定的。可编程 shader 出现后，开发者可以自己写 GPU 上的计算逻辑，GLSL 就是 OpenGL/WebGL 常用的 shader 语言。</p>
+					<p class="term-block"><b>基础解释：</b>GLSL 看起来像 C 语言风格的小程序。它常常不直接操作 DOM，而是计算“这个像素应该是什么颜色”。项目里的渐变、噪声和流动感，大量来自 GLSL 代码。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>Shader</strong><span class="full-name">Shader Program，着色器程序</span></div>
+					<p class="term-block"><b>发展历程：</b>“着色器”最初主要解决光照和材质表现，后来成为实时图形里最灵活的部分。现代视觉效果、游戏画面、滤镜和生成艺术都大量依赖 shader。</p>
+					<p class="term-block"><b>基础解释：</b>Shader 是交给 GPU 执行的小程序。顶点着色器决定图形顶点如何摆放，片元着色器决定每个像素的颜色。读本项目时，先找 shader 里的 <code>main()</code>。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>Uniform</strong><span class="full-name">Uniform Variable，着色器统一变量</span></div>
+					<p class="term-block"><b>发展历程：</b>可编程图形管线需要一种方式把 CPU 端参数传给 GPU 端 shader。Uniform 就承担了这类“整次绘制中保持一致”的参数传递。</p>
+					<p class="term-block"><b>基础解释：</b>Uniform 像 JS 递给 shader 的设置项。比如颜色、时间、速度、分辨率。滑块改变参数时，本质上常常是在改变某个 uniform 的值。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>RenderTarget</strong><span class="full-name">Render Target，渲染目标</span></div>
+					<p class="term-block"><b>发展历程：</b>复杂图形效果经常不能一步画完，于是图形程序会先把中间结果画到一张纹理里，再继续加工。这个思路在游戏、后期处理和 WebGL 特效里都很常见。</p>
+					<p class="term-block"><b>基础解释：</b>RenderTarget 可以理解成“临时画布”。先把一层效果画在临时画布上，再把它作为图片贴到最终画面中。本项目一些背景会用它做更复杂的颜色和噪声处理。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>OGL</strong><span class="full-name">OGL，轻量 WebGL 工具库</span></div>
+					<p class="term-block"><b>发展历程：</b>直接写 WebGL API 比较繁琐，所以社区出现了 Three.js、OGL 等封装库。OGL 比 Three.js 更轻，适合想控制底层但又不想手写所有 WebGL 样板代码的项目。</p>
+					<p class="term-block"><b>基础解释：</b>OGL 帮项目封装了 Renderer、Camera、Mesh、Program 等对象。你可以先把它看作“让 WebGL 更好写的一层工具”。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>Rollup</strong><span class="full-name">Rollup，JavaScript 模块打包工具</span></div>
+					<p class="term-block"><b>发展历程：</b>前端代码模块越来越多后，浏览器和发布平台需要更整洁的文件输出。Rollup 因为擅长打包库项目、输出 ES Module 和 UMD 等格式，被许多 JS 库采用。</p>
+					<p class="term-block"><b>基础解释：</b>Rollup 像一个整理员，把分散在多个文件里的源码收集起来，转换成别人更容易使用的构建文件。本项目的 <code>build/js</code> 和 <code>build/jsm</code> 就是打包产物。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>React</strong><span class="full-name">React，用户界面 JavaScript 库</span></div>
+					<p class="term-block"><b>发展历程：</b>随着网页应用越来越复杂，手动操作 DOM 变得难维护。React 提出用组件组织界面，用状态驱动渲染，后来成为前端框架生态的重要基础。</p>
+					<p class="term-block"><b>基础解释：</b>React 把页面拆成组件。本项目的 <code>packages/react</code> 是一层封装，让用户不用手动 new 背景类，而是像使用普通组件一样写 <code>&lt;Color4Bg /&gt;</code>。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>Git</strong><span class="full-name">Git，分布式版本控制系统</span></div>
+					<p class="term-block"><b>发展历程：</b>软件项目需要追踪每次修改、多人协作和回退历史。Git 因速度快、分支能力强，成为现代软件开发最常见的版本控制工具。</p>
+					<p class="term-block"><b>基础解释：</b>Git 像项目的时间机器。它记录文件变化，让你知道改了什么、谁改的、什么时候改的。你 fork 和 clone 这个项目后，本地目录里的 <code>.git</code> 就保存着这些版本信息。</p>
+				</div>
+				<div class="glossary-item">
+					<div class="glossary-term"><strong>GitHub</strong><span class="full-name">GitHub，基于 Git 的代码托管平台</span></div>
+					<p class="term-block"><b>发展历程：</b>Git 解决本地版本控制，GitHub 进一步把代码托管、开源协作、issue、pull request、release 等流程放到线上，推动了开源项目协作方式的发展。</p>
+					<p class="term-block"><b>基础解释：</b>GitHub 像代码项目的在线工作台。fork 是复制一份到自己账号下，clone 是下载到本地，pull request 是把你的修改请求合并回上游项目。</p>
+				</div>
+			</div>
+		</section>
+
+		<footer class="footer">
+			<p>建议下一步：从 <code>examples/demo-module-js.html</code> 进入效果，再按本页路线读 <code>ColorBg.js</code> 和一个具体背景类。读懂一条背景链路，比一次性打开所有文件更有效。</p>
+		</footer>
+	</main>
+
+	<script>
+		window.addEventListener("DOMContentLoaded", function () {
+			if (window.Color4Bg && document.getElementById("guide-bg")) {
+				new Color4Bg.AmbientLightBg({
+					dom: "guide-bg",
+					colors: ["#31B7B7", "#E56B5F", "#F0C766", "#528F5D", "#7A6FC7", "#31B7B7"],
+					seed: 2407,
+					loop: true
+				})
+			}
+		})
+	</script>
+</body>
+</html>

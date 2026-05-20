@@ -26,6 +26,8 @@ export class ColorBg {
 
 		// time track keyframe
 		this.frame = 0
+		this.isDestroyed = false
+		this.playbackSpeed = params.playbackSpeed || 1
 
 		// DOM
 		this.parentDom = params.dom ? document.getElementById(params.dom) : document.body
@@ -157,10 +159,14 @@ export class ColorBg {
 	}
 
 	_update = () => {
+		if (this.isDestroyed) {
+			return
+		}
+
 		requestAnimationFrame(this._update)
 
 		if (this.loop) {
-			this.frame++
+			this.frame += this.playbackSpeed
 			this._animate()
 		}
 
@@ -186,8 +192,41 @@ export class ColorBg {
 	_resetSeed() {}
 	_animate() {}
 
+	setPlaybackSpeed(speed = 1) {
+		const nextSpeed = parseFloat(speed)
+		this.playbackSpeed = Number.isFinite(nextSpeed) && nextSpeed > 0 ? nextSpeed : 1
+	}
+
+	setUniformValue(programKey, uniformName, value, componentIndex = null) {
+		const program = this[programKey]
+		const uniform = program && program.uniforms ? program.uniforms[uniformName] : null
+		if (!uniform || uniform.value === undefined) {
+			return false
+		}
+
+		const numericValue = parseFloat(value)
+		if (!Number.isFinite(numericValue)) {
+			return false
+		}
+
+		if (componentIndex !== null && uniform.value && typeof uniform.value === "object" && componentIndex in uniform.value) {
+			uniform.value[componentIndex] = numericValue
+			return true
+		}
+
+		if (typeof uniform.value === "number") {
+			uniform.value = numericValue
+			return true
+		}
+
+		return false
+	}
+
 	destroy() {
+		this.isDestroyed = true
 		this._delete()
-		this.parentDom.removeChild(this.gl.canvas)
+		if (this.gl.canvas.parentNode === this.parentDom) {
+			this.parentDom.removeChild(this.gl.canvas)
+		}
 	}
 }

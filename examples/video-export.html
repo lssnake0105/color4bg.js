@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>color4bg.js 1080p 视频导出</title>
+	<style>
+		:root {
+			color-scheme: light;
+			--ink: #1b1b1b;
+			--muted: #666;
+			--line: #ddd8ce;
+			--paper: #f7f5ef;
+			--panel: #ffffff;
+			--accent: #1976d2;
+			--accent-strong: #0f4f98;
+			--danger: #b3261e;
+			--ok: #2f7d4f;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+			background: var(--paper);
+			color: var(--ink);
+		}
+
+		header {
+			padding: 22px 28px;
+			border-bottom: 1px solid var(--line);
+			background: rgba(255, 255, 255, 0.86);
+			backdrop-filter: blur(14px);
+			position: sticky;
+			top: 0;
+			z-index: 10;
+		}
+
+		h1 {
+			margin: 0;
+			font-size: 28px;
+			line-height: 1.15;
+			letter-spacing: 0;
+		}
+
+		.header-copy {
+			margin: 8px 0 0;
+			color: var(--muted);
+			max-width: 920px;
+			line-height: 1.6;
+		}
+
+		main {
+			display: grid;
+			grid-template-columns: 360px minmax(0, 1fr);
+			gap: 20px;
+			padding: 20px;
+			align-items: start;
+		}
+
+		.controls,
+		.preview-shell,
+		.status-panel {
+			background: var(--panel);
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			box-shadow: 0 16px 40px rgba(35, 30, 20, 0.1);
+		}
+
+		.controls {
+			position: sticky;
+			top: 108px;
+			padding: 18px;
+		}
+
+		.control-group {
+			padding: 16px 0;
+			border-bottom: 1px solid var(--line);
+		}
+
+		.control-group:first-child {
+			padding-top: 0;
+		}
+
+		.control-group:last-child {
+			border-bottom: 0;
+			padding-bottom: 0;
+		}
+
+		h2 {
+			margin: 0 0 12px;
+			font-size: 17px;
+			line-height: 1.3;
+			letter-spacing: 0;
+		}
+
+		label {
+			display: block;
+			margin: 12px 0 6px;
+			font-size: 13px;
+			color: var(--muted);
+		}
+
+		select,
+		input,
+		button {
+			font: inherit;
+		}
+
+		select,
+		input[type="number"],
+		input[type="text"] {
+			width: 100%;
+			min-height: 40px;
+			border: 1px solid var(--line);
+			border-radius: 8px;
+			padding: 8px 10px;
+			background: #fff;
+			color: var(--ink);
+		}
+
+		input[type="range"] {
+			width: 100%;
+		}
+
+		.inline-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+		}
+
+		.swatches {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			gap: 6px;
+			margin-top: 10px;
+		}
+
+		.swatch {
+			height: 24px;
+			border-radius: 6px;
+			border: 1px solid rgba(0, 0, 0, 0.16);
+		}
+
+		.option-row {
+			margin-top: 12px;
+		}
+
+		.option-row .option-head {
+			display: flex;
+			justify-content: space-between;
+			gap: 12px;
+			font-size: 13px;
+			color: var(--muted);
+		}
+
+		.button-row {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 10px;
+			margin-top: 14px;
+		}
+
+		button {
+			min-height: 42px;
+			border-radius: 8px;
+			border: 1px solid var(--accent);
+			background: var(--accent);
+			color: #fff;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		button.secondary {
+			background: #fff;
+			color: var(--accent);
+		}
+
+		button.danger {
+			border-color: var(--danger);
+			background: var(--danger);
+		}
+
+		button:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
+		.preview-shell {
+			padding: 16px;
+			overflow: auto;
+		}
+
+		.preview-top {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: space-between;
+			gap: 10px;
+			align-items: center;
+			margin-bottom: 12px;
+			color: var(--muted);
+			font-size: 14px;
+		}
+
+		.stage-frame {
+			width: 1920px;
+			height: 1080px;
+			background: #111;
+			border-radius: 0;
+			overflow: hidden;
+			position: relative;
+		}
+
+		#export-stage {
+			width: 1920px;
+			height: 1080px;
+			position: relative;
+			overflow: hidden;
+			background: #111;
+		}
+
+		.status-panel {
+			margin-top: 16px;
+			padding: 16px;
+		}
+
+		progress {
+			width: 100%;
+			height: 16px;
+			accent-color: var(--accent);
+		}
+
+		.status-line {
+			margin-top: 10px;
+			color: var(--muted);
+			line-height: 1.6;
+		}
+
+		.download-link {
+			display: none;
+			margin-top: 14px;
+			min-height: 42px;
+			align-items: center;
+			justify-content: center;
+			border-radius: 8px;
+			background: var(--ok);
+			color: #fff;
+			text-decoration: none;
+			font-weight: 700;
+		}
+
+		.note {
+			margin-top: 10px;
+			font-size: 13px;
+			color: var(--muted);
+			line-height: 1.55;
+		}
+
+		.warning {
+			color: var(--danger);
+		}
+
+		code {
+			padding: 2px 5px;
+			border-radius: 5px;
+			background: #eee9df;
+			font-family: Consolas, "SFMono-Regular", monospace;
+		}
+
+		@media (max-width: 980px) {
+			main {
+				grid-template-columns: 1fr;
+			}
+
+			.controls {
+				position: static;
+			}
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<h1>1080p 动态背景视频导出</h1>
+		<p class="header-copy">这是一个本地导出工具页。它会把 color4bg.js 的 WebGL canvas 固定为 1920×1080，然后用浏览器原生视频编码器录制。3 分钟导出需要真实等待 3 分钟；浏览器支持 MP4 时优先 MP4，否则自动使用 WebM。</p>
+	</header>
+
+	<main>
+		<aside class="controls">
+			<div class="control-group">
+				<h2>背景</h2>
+				<label for="bg-select">背景类型</label>
+				<select id="bg-select"></select>
+
+				<label for="palette-select">调色板</label>
+				<select id="palette-select"></select>
+				<div class="swatches" id="swatches"></div>
+
+				<label for="seed-input">Seed</label>
+				<input id="seed-input" type="number" value="1000" min="1" step="1" />
+			</div>
+
+			<div class="control-group">
+				<h2>视频</h2>
+				<div class="inline-grid">
+					<div>
+						<label for="duration-input">时长，秒</label>
+						<input id="duration-input" type="number" value="180" min="1" max="600" step="1" />
+					</div>
+					<div>
+						<label for="fps-select">帧率</label>
+						<select id="fps-select">
+							<option value="30" selected>30 fps</option>
+							<option value="60">60 fps</option>
+						</select>
+					</div>
+				</div>
+				<label for="bitrate-select">码率</label>
+				<select id="bitrate-select">
+					<option value="16000000">16 Mbps，体积较小</option>
+					<option value="30000000" selected>30 Mbps，推荐</option>
+					<option value="50000000">50 Mbps，高质量</option>
+				</select>
+				<p class="note">分辨率固定为 <code>1920×1080</code>。30fps 的 3 分钟视频约 5400 帧；60fps 约 10800 帧，对浏览器和显卡压力更高。</p>
+			</div>
+
+			<div class="control-group">
+				<h2>参数</h2>
+				<div id="options-box"></div>
+				<p class="note">这里只暴露项目已有的 demo 参数。修改参数会重新创建背景，导出前请先确认预览效果。</p>
+			</div>
+
+			<div class="control-group">
+				<h2>导出</h2>
+				<button id="record-btn">开始导出视频</button>
+				<div class="button-row">
+					<button class="secondary" id="refresh-btn">重建预览</button>
+					<button class="danger" id="stop-btn" disabled>停止</button>
+				</div>
+				<p class="note" id="support-note"></p>
+			</div>
+		</aside>
+
+		<section>
+			<div class="preview-shell">
+				<div class="preview-top">
+					<span>导出舞台：1920×1080 原始画布</span>
+					<span id="estimate-label"></span>
+				</div>
+				<div class="stage-frame">
+					<div id="export-stage"></div>
+				</div>
+			</div>
+
+			<div class="status-panel">
+				<progress id="progress" value="0" max="1"></progress>
+				<div class="status-line" id="status-line">准备就绪。调整背景后点击“开始导出视频”。</div>
+				<a id="download-link" class="download-link" download>下载视频</a>
+			</div>
+		</section>
+	</main>
+
+	<script type="module">
+		import { Colors, ColorGroups, Options, Bgs } from "./data.js"
+
+		const stage = document.querySelector("#export-stage")
+		const bgSelect = document.querySelector("#bg-select")
+		const paletteSelect = document.querySelector("#palette-select")
+		const seedInput = document.querySelector("#seed-input")
+		const durationInput = document.querySelector("#duration-input")
+		const fpsSelect = document.querySelector("#fps-select")
+		const bitrateSelect = document.querySelector("#bitrate-select")
+		const optionsBox = document.querySelector("#options-box")
+		const recordBtn = document.querySelector("#record-btn")
+		const stopBtn = document.querySelector("#stop-btn")
+		const refreshBtn = document.querySelector("#refresh-btn")
+		const progress = document.querySelector("#progress")
+		const statusLine = document.querySelector("#status-line")
+		const downloadLink = document.querySelector("#download-link")
+		const supportNote = document.querySelector("#support-note")
+		const estimateLabel = document.querySelector("#estimate-label")
+		const swatches = document.querySelector("#swatches")
+
+		const recorderFormats = [
+			{ mimeType: "video/mp4;codecs=avc1.42E01E", extension: "mp4", label: "MP4 / H.264" },
+			{ mimeType: "video/mp4", extension: "mp4", label: "MP4" },
+			{ mimeType: "video/webm;codecs=vp9", extension: "webm", label: "WebM / VP9" },
+			{ mimeType: "video/webm;codecs=vp8", extension: "webm", label: "WebM / VP8" },
+			{ mimeType: "video/webm", extension: "webm", label: "WebM" }
+		]
+
+		let colorbg = null
+		let mediaRecorder = null
+		let recordTimer = null
+		let progressTimer = null
+		let startedAt = 0
+		let activeFormat = getSupportedFormat()
+		let currentObjectUrl = ""
+
+		init()
+
+		function init() {
+			Bgs.forEach((item) => {
+				const option = document.createElement("option")
+				option.value = item.name
+				option.textContent = item.name
+				bgSelect.appendChild(option)
+			})
+			bgSelect.value = "ambient-light"
+
+			Object.entries(ColorGroups).forEach(([groupName, palettes]) => {
+				const group = document.createElement("optgroup")
+				group.label = groupName
+				Object.keys(palettes).forEach((name) => {
+					const option = document.createElement("option")
+					option.value = name
+					option.textContent = name
+					group.appendChild(option)
+				})
+				paletteSelect.appendChild(group)
+			})
+			paletteSelect.value = "vivid"
+
+			if (!activeFormat) {
+				supportNote.innerHTML = '<span class="warning">当前浏览器不支持 MediaRecorder 视频编码，无法在浏览器内导出。</span>'
+				recordBtn.disabled = true
+			} else {
+				supportNote.textContent = `当前浏览器将使用 ${activeFormat.label} 导出。`
+			}
+
+			bgSelect.addEventListener("change", () => {
+				syncPaletteToBg()
+				buildOptionControls()
+				recreateBackground()
+			})
+			paletteSelect.addEventListener("change", recreateBackground)
+			seedInput.addEventListener("change", recreateBackground)
+			durationInput.addEventListener("input", updateEstimate)
+			fpsSelect.addEventListener("change", updateEstimate)
+			bitrateSelect.addEventListener("change", updateEstimate)
+			refreshBtn.addEventListener("click", recreateBackground)
+			recordBtn.addEventListener("click", startRecording)
+			stopBtn.addEventListener("click", stopRecording)
+
+			syncPaletteToBg()
+			buildOptionControls()
+			recreateBackground()
+			updateEstimate()
+		}
+
+		function getSupportedFormat() {
+			if (!("MediaRecorder" in window)) return null
+			return recorderFormats.find((format) => MediaRecorder.isTypeSupported(format.mimeType)) || null
+		}
+
+		function getSelectedBg() {
+			return Bgs.find((item) => item.name === bgSelect.value) || Bgs[0]
+		}
+
+		function syncPaletteToBg() {
+			const bg = getSelectedBg()
+			paletteSelect.value = bg.palette || "vivid"
+			renderSwatches()
+		}
+
+		function renderSwatches() {
+			swatches.innerHTML = ""
+			Colors[paletteSelect.value].forEach((hex) => {
+				const item = document.createElement("div")
+				item.className = "swatch"
+				item.style.background = hex
+				swatches.appendChild(item)
+			})
+		}
+
+		function buildOptionControls() {
+			const optionDefs = Options[bgSelect.value] || []
+			optionsBox.innerHTML = ""
+
+			if (optionDefs.length === 0) {
+				const empty = document.createElement("p")
+				empty.className = "note"
+				empty.textContent = "这个背景没有额外 demo 参数。"
+				optionsBox.appendChild(empty)
+				return
+			}
+
+			optionDefs.forEach((definition) => {
+				const row = document.createElement("div")
+				row.className = "option-row"
+
+				const head = document.createElement("div")
+				head.className = "option-head"
+				const label = document.createElement("span")
+				label.textContent = definition.display || definition.name
+				const value = document.createElement("span")
+				value.textContent = definition.value
+				head.append(label, value)
+				row.appendChild(head)
+
+				const input = document.createElement("input")
+				input.dataset.optionName = definition.name
+				input.value = definition.value
+
+				if (definition.type === "range") {
+					input.type = "range"
+					input.min = definition.min
+					input.max = definition.max
+					input.step = definition.step
+				} else {
+					input.type = "text"
+				}
+
+				input.addEventListener("input", () => {
+					value.textContent = input.value
+					if (definition.name === "playbackSpeed" && colorbg && typeof colorbg.setPlaybackSpeed === "function") {
+						colorbg.setPlaybackSpeed(input.value)
+					} else if (definition.name === "seed" && colorbg) {
+						colorbg.reset(parseFloat(input.value))
+					} else if (colorbg && typeof colorbg.update === "function") {
+						colorbg.update(definition.name, input.value)
+					}
+				})
+
+				row.appendChild(input)
+				optionsBox.appendChild(row)
+			})
+		}
+
+		function recreateBackground() {
+			if (mediaRecorder && mediaRecorder.state === "recording") return
+			if (currentObjectUrl) {
+				URL.revokeObjectURL(currentObjectUrl)
+				currentObjectUrl = ""
+			}
+			downloadLink.style.display = "none"
+			downloadLink.removeAttribute("href")
+
+			if (colorbg) {
+				colorbg.destroy()
+				colorbg = null
+			}
+			stage.innerHTML = ""
+			renderSwatches()
+
+			const bg = getSelectedBg()
+			colorbg = new bg.class({
+				dom: "export-stage",
+				colors: [...Colors[paletteSelect.value]],
+				seed: Number(seedInput.value) || 1000,
+				loop: true
+			})
+
+			applyCurrentOptions()
+		}
+
+		function applyCurrentOptions() {
+			if (!colorbg || typeof colorbg.update !== "function") return
+			optionsBox.querySelectorAll("[data-option-name]").forEach((input) => {
+				const name = input.dataset.optionName
+				if (name === "seed") {
+					colorbg.reset(parseFloat(input.value))
+				} else if (name === "playbackSpeed" && typeof colorbg.setPlaybackSpeed === "function") {
+					colorbg.setPlaybackSpeed(input.value)
+				} else {
+					colorbg.update(name, input.value)
+				}
+			})
+		}
+
+		async function startRecording() {
+			if (!activeFormat || !colorbg) return
+			const canvas = stage.querySelector("canvas")
+			if (!canvas || typeof canvas.captureStream !== "function") {
+				statusLine.innerHTML = '<span class="warning">没有找到可录制的 WebGL canvas，或当前浏览器不支持 canvas.captureStream。</span>'
+				return
+			}
+
+			const durationMs = clamp(Number(durationInput.value) || 180, 1, 600) * 1000
+			const fps = Number(fpsSelect.value) || 30
+			const bitrate = Number(bitrateSelect.value) || 30000000
+			const chunks = []
+
+			progress.value = 0
+			recordBtn.disabled = true
+			refreshBtn.disabled = true
+			stopBtn.disabled = false
+			downloadLink.style.display = "none"
+			statusLine.textContent = `正在录制 ${durationMs / 1000} 秒，录制期间请保持页面打开。`
+
+			const stream = canvas.captureStream(fps)
+			mediaRecorder = new MediaRecorder(stream, {
+				mimeType: activeFormat.mimeType,
+				videoBitsPerSecond: bitrate
+			})
+
+			mediaRecorder.addEventListener("dataavailable", (event) => {
+				if (event.data && event.data.size > 0) chunks.push(event.data)
+			})
+
+			mediaRecorder.addEventListener("stop", () => {
+				clearTimers()
+				stream.getTracks().forEach((track) => track.stop())
+				const blob = new Blob(chunks, { type: activeFormat.mimeType })
+				const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+				const filename = `color4bg-${bgSelect.value}-1080p-${fps}fps-${timestamp}.${activeFormat.extension}`
+				currentObjectUrl = URL.createObjectURL(blob)
+				downloadLink.href = currentObjectUrl
+				downloadLink.download = filename
+				downloadLink.textContent = `下载视频：${filename}`
+				downloadLink.style.display = "flex"
+				statusLine.textContent = `导出完成，文件大小约 ${formatBytes(blob.size)}。`
+				recordBtn.disabled = false
+				refreshBtn.disabled = false
+				stopBtn.disabled = true
+				progress.value = 1
+				mediaRecorder = null
+			})
+
+			startedAt = performance.now()
+			mediaRecorder.start(1000)
+			progressTimer = setInterval(() => {
+				const elapsed = performance.now() - startedAt
+				progress.value = Math.min(elapsed / durationMs, 1)
+				statusLine.textContent = `正在录制：${formatTime(elapsed / 1000)} / ${formatTime(durationMs / 1000)}`
+			}, 250)
+			recordTimer = setTimeout(stopRecording, durationMs)
+		}
+
+		function stopRecording() {
+			if (mediaRecorder && mediaRecorder.state === "recording") {
+				mediaRecorder.stop()
+				statusLine.textContent = "正在封装视频文件..."
+			}
+			clearTimers()
+		}
+
+		function clearTimers() {
+			if (recordTimer) clearTimeout(recordTimer)
+			if (progressTimer) clearInterval(progressTimer)
+			recordTimer = null
+			progressTimer = null
+		}
+
+		function updateEstimate() {
+			const duration = clamp(Number(durationInput.value) || 180, 1, 600)
+			const fps = Number(fpsSelect.value) || 30
+			const bitrate = Number(bitrateSelect.value) || 30000000
+			const frames = duration * fps
+			const estimatedBytes = (bitrate / 8) * duration
+			estimateLabel.textContent = `${frames.toLocaleString()} 帧，估计成品约 ${formatBytes(estimatedBytes)}`
+		}
+
+		function clamp(value, min, max) {
+			return Math.min(Math.max(value, min), max)
+		}
+
+		function formatTime(totalSeconds) {
+			const seconds = Math.max(0, Math.floor(totalSeconds))
+			const m = Math.floor(seconds / 60)
+			const s = seconds % 60
+			return `${m}:${String(s).padStart(2, "0")}`
+		}
+
+		function formatBytes(bytes) {
+			if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+			if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+			return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+		}
+	</script>
+</body>
+</html>

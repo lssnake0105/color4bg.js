@@ -205,6 +205,18 @@ export class RandomCubesBg extends ColorBg {
 		}
 	}
 
+	update(option, val) {
+		switch (option) {
+			case "fogStart":
+				this.start_(parseFloat(val))
+				break
+
+			case "fogEnd":
+				this.end_(parseFloat(val))
+				break
+		}
+	}
+
 	start_(v) {
 		this._cubeShader.uniforms.uFogStart.value = v
 	}

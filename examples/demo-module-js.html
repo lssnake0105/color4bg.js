@@ -43,6 +43,17 @@
 				transform: scale(1);
 				opacity: 1;
 			}
+
+			.advanced-list-box {
+				display: none;
+				transform-origin: 100% 0;
+				transform: scale(0);
+				opacity: 0;
+			}
+			.advanced-list-box.show {
+				transform: scale(1);
+				opacity: 1;
+			}
 		</style>
 	</head>
 
@@ -60,7 +71,8 @@
 					<div class="z-50 absolute top-4 right-4" id="box_colors">
 						<div class="absolute p-4 right-0 text-4xl rounded-full bg-gray-100/20 cursor-pointer hover:bg-gray-100/30 transition" id="btn_show_colors">🎨</div>
 						<div class="colors-list-box relative p-4 top-0 right-0 bg-gray-100 rounded-2xl transition">
-							<ul id="colors_list"></ul>
+							<div class="px-2 pb-2 text-sm text-gray-500">Palette: <span id="active_palette" class="font-semibold text-gray-700">pastelglossy</span></div>
+							<ul id="colors_list" class="w-96 max-h-[72vh] overflow-y-auto"></ul>
 						</div>
 					</div>
 
@@ -68,12 +80,22 @@
 					<div class="z-40 absolute top-4 right-32" id="box_options">
 						<div class="absolute p-4 right-0 text-4xl rounded-full bg-gray-100/20 cursor-pointer hover:bg-gray-100/30 transition" id="btn_show_options">🎛</div>
 						<div class="options-list-box relative p-4 top-0 right-0 bg-gray-100 rounded-2xl transition">
-							<ul id="options_list"></ul>
+							<div class="px-2 pb-2 text-sm font-semibold text-gray-600">Basic Options</div>
+							<ul id="options_list" class="max-h-[70vh] overflow-y-auto"></ul>
 						</div>
 					</div>
 
-					<!-- options -->
-					<div class="z-40 absolute top-4 left-20" id="box_options">
+					<!-- advanced options -->
+					<div class="z-40 absolute top-4 right-60" id="box_advanced_options">
+						<div class="absolute p-4 right-0 text-4xl rounded-full bg-gray-100/20 cursor-pointer hover:bg-gray-100/30 transition" id="btn_show_advanced_options">🔧</div>
+						<div class="advanced-list-box relative p-4 top-0 right-0 bg-gray-100 rounded-2xl transition">
+							<div class="px-2 pb-2 text-sm font-semibold text-gray-600">Advanced Uniforms</div>
+							<ul id="advanced_options_list" class="max-h-[70vh] overflow-y-auto"></ul>
+						</div>
+					</div>
+
+					<!-- seed -->
+					<div class="z-40 absolute top-4 left-20" id="box_seed">
 						<div class="absolute p-4 right-0 text-4xl rounded-full bg-gray-100/20 cursor-pointer hover:bg-gray-100/30 transition" id="btn_resetSeed">🎲</div>
 					</div>
 				</div>
@@ -96,6 +118,7 @@
 					colors: ["#FE8BFC", "#BD9FFB", "#8EDBFD", "#C4F5EF", "#E7F9FE", "#E9FFE0"], // 6 Hex colors
 					seed: 1000, // Random seed
 					loop: true, // Whether the background would be loop animated,
+					playbackSpeed: 1
 				})
 			}
 
