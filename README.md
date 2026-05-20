@@ -12,6 +12,16 @@ Please visit: [color4bg.com](https://www.color4bg.com)
 ![color4bg.js](https://color4bg.com/static/images/meta-og-image.jpg)
 
 
+## 在线示例
+如果你把这个仓库部署到 GitHub Pages，可以直接打开下面这些页面：
+
+- [示例首页](./index.html)
+- [Demo module JS](./examples/demo-module-js.html)
+- [Demo embed JS](./examples/demo-embed-js.html)
+- [项目学习路线](./examples/project-learning-guide.html)
+- [视频导出工具](./examples/video-export.html)
+
+
 ## 🚀 Features
 - Customizable Colors: You can specify an array of up to 6 colors that will be used to generate the background pattern.
 - Dynamic Animation: The generated background can be set to loop, creating a mesmerizing, fluid animation.
