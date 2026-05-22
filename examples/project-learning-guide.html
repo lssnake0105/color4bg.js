@@ -71,6 +71,7 @@
 			z-index: 2;
 			width: min(1180px, 100%);
 			margin: 0 auto 40px;
+			padding-right: 360px;
 			color: #fff;
 		}
 
@@ -123,6 +124,77 @@
 			background: #fff;
 			color: #171717;
 			border-color: #fff;
+		}
+
+		.palette-panel {
+			position: absolute;
+			right: max(24px, calc((100vw - 1180px) / 2));
+			bottom: 34px;
+			z-index: 3;
+			width: min(330px, calc(100% - 48px));
+			padding: 14px;
+			border: 1px solid rgba(255, 255, 255, 0.34);
+			border-radius: 8px;
+			background: rgba(18, 18, 18, 0.34);
+			backdrop-filter: blur(18px);
+			color: #fff;
+			box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+		}
+
+		.palette-panel h2 {
+			margin: 0 0 10px;
+			font-size: 15px;
+			line-height: 1.25;
+			font-weight: 740;
+		}
+
+		.palette-options {
+			display: grid;
+			gap: 8px;
+		}
+
+		.palette-option {
+			display: grid;
+			grid-template-columns: 78px 1fr;
+			gap: 10px;
+			align-items: center;
+			width: 100%;
+			min-height: 42px;
+			padding: 7px;
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			border-radius: 8px;
+			background: rgba(255, 255, 255, 0.12);
+			color: inherit;
+			font: inherit;
+			text-align: left;
+			cursor: pointer;
+		}
+
+		.palette-option:hover,
+		.palette-option.is-active {
+			background: rgba(255, 255, 255, 0.25);
+			border-color: rgba(255, 255, 255, 0.72);
+		}
+
+		.palette-preview {
+			display: grid;
+			grid-template-columns: repeat(6, 1fr);
+			height: 26px;
+			overflow: hidden;
+			border-radius: 6px;
+			border: 1px solid rgba(255, 255, 255, 0.38);
+		}
+
+		.palette-preview span {
+			display: block;
+		}
+
+		.palette-name {
+			overflow: hidden;
+			white-space: nowrap;
+			text-overflow: ellipsis;
+			font-size: 14px;
+			font-weight: 650;
 		}
 
 		.page-nav {
@@ -502,6 +574,18 @@
 				min-height: 88vh;
 			}
 
+			.palette-panel {
+				position: relative;
+				right: auto;
+				bottom: auto;
+				width: min(100%, 560px);
+				margin: 0 auto 22px;
+			}
+
+			.hero-inner {
+				padding-right: 0;
+			}
+
 			.section-heading,
 			.file-map,
 			.two-col,
@@ -529,6 +613,10 @@
 
 			.hero-copy {
 				font-size: 17px;
+			}
+
+			.palette-option {
+				grid-template-columns: 72px 1fr;
 			}
 
 			.grid,
@@ -559,6 +647,10 @@
 				<a href="./demo-module-js.html">打开原项目 Demo</a>
 				<a href="./video-export.html">打开视频导出工具</a>
 			</div>
+		</div>
+		<div class="palette-panel" aria-label="背景配色选择">
+			<h2>背景配色</h2>
+			<div class="palette-options" id="palette-options"></div>
 		</div>
 	</header>
 
@@ -1192,10 +1284,78 @@ python -m http.server 8000</pre>
 
 	<script>
 		window.addEventListener("DOMContentLoaded", function () {
+			const palettes = [
+				{
+					name: "项目原色",
+					colors: ["#31B7B7", "#E56B5F", "#F0C766", "#528F5D", "#7A6FC7", "#31B7B7"]
+				},
+				{
+					name: "海洋蓝绿",
+					colors: ["#001219", "#005F73", "#0A9396", "#94D2BD", "#E9D8A6", "#EE9B00"]
+				},
+				{
+					name: "糖果霓虹",
+					colors: ["#00F5D4", "#00BBF9", "#9B5DE5", "#F15BB5", "#FEE440", "#00F5D4"]
+				},
+				{
+					name: "柔和马卡龙",
+					colors: ["#FFC8DD", "#FFAFCC", "#BDE0FE", "#A2D2FF", "#CDB4DB", "#FFC8DD"]
+				},
+				{
+					name: "深夜碳黑",
+					colors: ["#020617", "#111827", "#1F2937", "#374151", "#9CA3AF", "#E5E7EB"]
+				},
+				{
+					name: "暖沙日落",
+					colors: ["#FFF3B0", "#E09F3E", "#9E2A2B", "#540B0E", "#335C67", "#FFF3B0"]
+				}
+			]
+			const paletteOptions = document.getElementById("palette-options")
+			let guideBg = null
+
+			function renderPaletteOptions() {
+				if (!paletteOptions) return
+				paletteOptions.innerHTML = ""
+
+				palettes.forEach(function (palette, index) {
+					const button = document.createElement("button")
+					const preview = document.createElement("span")
+					const name = document.createElement("span")
+
+					button.type = "button"
+					button.className = "palette-option" + (index === 0 ? " is-active" : "")
+					button.setAttribute("aria-label", "切换到" + palette.name + "配色")
+					preview.className = "palette-preview"
+					name.className = "palette-name"
+					name.textContent = palette.name
+
+					palette.colors.forEach(function (hex) {
+						const swatch = document.createElement("span")
+						swatch.style.background = hex
+						preview.appendChild(swatch)
+					})
+
+					button.appendChild(preview)
+					button.appendChild(name)
+					button.addEventListener("click", function () {
+						if (guideBg && typeof guideBg.colors === "function") {
+							guideBg.colors([...palette.colors])
+						}
+						paletteOptions.querySelectorAll(".palette-option").forEach(function (item) {
+							item.classList.remove("is-active")
+						})
+						button.classList.add("is-active")
+					})
+					paletteOptions.appendChild(button)
+				})
+			}
+
+			renderPaletteOptions()
+
 			if (window.Color4Bg && document.getElementById("guide-bg")) {
-				new Color4Bg.AmbientLightBg({
+				guideBg = new Color4Bg.AmbientLightBg({
 					dom: "guide-bg",
-					colors: ["#31B7B7", "#E56B5F", "#F0C766", "#528F5D", "#7A6FC7", "#31B7B7"],
+					colors: [...palettes[0].colors],
 					seed: 2407,
 					loop: true
 				})
