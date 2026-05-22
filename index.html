@@ -3,21 +3,16 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>color4bg.js 在线示例</title>
+	<title>color4bg.js</title>
 	<style>
 		:root {
 			color-scheme: light;
-			--bg: #0f172a;
-			--bg-soft: #111827;
-			--panel: rgba(255, 255, 255, 0.08);
-			--panel-strong: rgba(255, 255, 255, 0.14);
-			--line: rgba(255, 255, 255, 0.12);
-			--text: #f8fafc;
-			--muted: rgba(248, 250, 252, 0.72);
-			--accent: #7dd3fc;
-			--accent-2: #fda4af;
-			--accent-3: #c4b5fd;
-			--shadow: 0 24px 70px rgba(2, 6, 23, 0.45);
+			--text: #111827;
+			--muted: #5b6472;
+			--line: #e5e7eb;
+			--panel: #ffffff;
+			--dark: #0b1020;
+			--accent: #2563eb;
 		}
 
 		* {
@@ -29,264 +24,301 @@
 			margin: 0;
 			min-height: 100%;
 			font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
-			background:
-				radial-gradient(circle at top left, rgba(125, 211, 252, 0.2), transparent 28%),
-				radial-gradient(circle at 90% 10%, rgba(196, 181, 253, 0.18), transparent 24%),
-				linear-gradient(160deg, var(--bg) 0%, var(--bg-soft) 100%);
+			background: #f6f7fb;
 			color: var(--text);
 		}
 
-		body::before {
-			content: "";
-			position: fixed;
-			inset: 0;
-			pointer-events: none;
-			background-image: linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-			background-size: 42px 42px;
-			mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 92%);
-		}
-
-		.shell {
-			position: relative;
-			width: min(1140px, calc(100% - 32px));
-			margin: 0 auto;
-			padding: 56px 0 72px;
+		a {
+			color: inherit;
+			text-decoration: none;
 		}
 
 		.hero {
-			display: grid;
-			grid-template-columns: 1.2fr 0.8fr;
-			gap: 22px;
-			align-items: stretch;
+			position: relative;
+			min-height: 76vh;
+			display: flex;
+			align-items: end;
+			overflow: hidden;
+			background-image:
+				linear-gradient(90deg, rgba(6, 10, 22, 0.86), rgba(6, 10, 22, 0.42), rgba(6, 10, 22, 0.12)),
+				url("examples/assets/images/ambient-light.jpg");
+			background-size: cover;
+			background-position: center;
+			color: #fff;
 		}
 
-		.panel {
-			border: 1px solid var(--line);
-			background: var(--panel);
-			backdrop-filter: blur(18px);
-			border-radius: 24px;
-			box-shadow: var(--shadow);
+		.hero-inner {
+			width: min(1180px, calc(100% - 40px));
+			margin: 0 auto;
+			padding: 56px 0;
 		}
 
-		.hero-copy {
-			padding: 34px;
-		}
-
-		.eyebrow {
-			display: inline-flex;
-			align-items: center;
-			gap: 8px;
-			padding: 8px 12px;
-			border-radius: 999px;
-			background: rgba(255, 255, 255, 0.08);
-			color: var(--muted);
-			font-size: 13px;
-			margin-bottom: 18px;
-		}
-
-		h1 {
+		.brand {
 			margin: 0;
-			font-size: clamp(42px, 7vw, 86px);
-			line-height: 0.98;
-			letter-spacing: -0.04em;
+			font-size: clamp(48px, 10vw, 112px);
+			line-height: 0.92;
+			font-weight: 900;
+			letter-spacing: 0;
 		}
 
-		.lead {
-			margin: 18px 0 0;
-			font-size: 18px;
-			line-height: 1.75;
-			color: var(--muted);
-			max-width: 62ch;
+		.subtitle {
+			margin: 20px 0 0;
+			max-width: 680px;
+			font-size: clamp(18px, 2vw, 24px);
+			line-height: 1.55;
+			color: rgba(255, 255, 255, 0.86);
 		}
 
 		.actions {
 			display: flex;
 			flex-wrap: wrap;
 			gap: 12px;
-			margin-top: 28px;
+			margin-top: 30px;
 		}
 
-		.actions a {
+		.action {
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
-			min-height: 46px;
-			padding: 0 16px;
-			border-radius: 14px;
-			text-decoration: none;
-			font-weight: 700;
-			border: 1px solid var(--line);
-			color: var(--text);
-			background: rgba(255, 255, 255, 0.06);
+			min-height: 48px;
+			padding: 0 18px;
+			border-radius: 8px;
+			font-weight: 800;
+			background: rgba(255, 255, 255, 0.16);
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			backdrop-filter: blur(12px);
 		}
 
-		.actions a.primary {
-			background: linear-gradient(135deg, var(--accent), var(--accent-3));
-			color: #09111f;
-			border-color: transparent;
+		.action.primary {
+			background: #fff;
+			color: var(--dark);
+			border-color: #fff;
 		}
 
-		.mini-grid {
+		.main {
+			width: min(1180px, calc(100% - 40px));
+			margin: 0 auto;
+			padding: 32px 0 56px;
+		}
+
+		.quick-grid {
 			display: grid;
+			grid-template-columns: repeat(3, minmax(0, 1fr));
 			gap: 16px;
-			padding: 18px;
+			margin-top: -64px;
+			position: relative;
+			z-index: 2;
 		}
 
-		.stat {
+		.quick-card {
+			min-height: 170px;
 			padding: 20px;
-			border-radius: 18px;
-			background: rgba(255, 255, 255, 0.06);
-			border: 1px solid var(--line);
-		}
-
-		.stat strong {
-			display: block;
-			font-size: 22px;
-			margin-bottom: 8px;
-		}
-
-		.section-title {
+			border-radius: 8px;
+			border: 1px solid rgba(255, 255, 255, 0.72);
+			background: rgba(255, 255, 255, 0.9);
+			box-shadow: 0 20px 50px rgba(15, 23, 42, 0.14);
 			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+		}
+
+		.quick-card strong {
+			display: block;
+			font-size: 24px;
+			margin-bottom: 10px;
+		}
+
+		.quick-card span {
+			color: var(--muted);
+			line-height: 1.55;
+		}
+
+		.quick-card em {
+			margin-top: 18px;
+			font-style: normal;
+			font-weight: 800;
+			color: var(--accent);
+		}
+
+		.section-head {
+			margin: 40px 0 16px;
+			display: flex;
+			align-items: end;
 			justify-content: space-between;
 			gap: 16px;
-			align-items: end;
-			margin: 34px 0 16px;
 		}
 
-		.section-title h2 {
+		.section-head h2 {
 			margin: 0;
-			font-size: 22px;
-			letter-spacing: -0.02em;
+			font-size: 24px;
 		}
 
-		.section-title p {
+		.section-head p {
 			margin: 0;
 			color: var(--muted);
-			max-width: 56ch;
 		}
 
-		.cards {
+		.preview-grid {
 			display: grid;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: 16px;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 14px;
 		}
 
-		.card {
-			padding: 22px;
-			border-radius: 20px;
+		.preview {
 			border: 1px solid var(--line);
-			background: rgba(255, 255, 255, 0.07);
-			text-decoration: none;
-			color: inherit;
-			transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+			border-radius: 8px;
+			background: var(--panel);
+			overflow: hidden;
+			transition: transform 160ms ease, box-shadow 160ms ease;
 		}
 
-		.card:hover {
+		.preview:hover {
 			transform: translateY(-2px);
-			background: var(--panel-strong);
-			border-color: rgba(255, 255, 255, 0.22);
+			box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
 		}
 
-		.card h3 {
-			margin: 0 0 8px;
-			font-size: 20px;
+		.preview img {
+			display: block;
+			width: 100%;
+			aspect-ratio: 16 / 10;
+			object-fit: cover;
 		}
 
-		.card p {
-			margin: 0 0 12px;
+		.preview-body {
+			padding: 14px;
+		}
+
+		.preview-body strong {
+			display: block;
+			font-size: 16px;
+			margin-bottom: 6px;
+		}
+
+		.preview-body span {
+			display: block;
 			color: var(--muted);
-			line-height: 1.7;
-		}
-
-		.path {
 			font-size: 13px;
-			color: rgba(248, 250, 252, 0.9);
+			line-height: 1.5;
 		}
 
-		.footer-note {
-			margin-top: 22px;
-			padding: 18px 20px;
-			border-radius: 18px;
+		.note {
+			margin-top: 18px;
+			padding: 14px 16px;
 			border: 1px solid var(--line);
-			background: rgba(255, 255, 255, 0.05);
+			border-radius: 8px;
+			background: #fff;
 			color: var(--muted);
-			line-height: 1.7;
+			line-height: 1.6;
 		}
 
-		@media (max-width: 840px) {
-			.hero,
-			.cards {
+		@media (max-width: 900px) {
+			.quick-grid,
+			.preview-grid {
+				grid-template-columns: 1fr 1fr;
+			}
+
+			.quick-grid {
+				margin-top: 18px;
+			}
+		}
+
+		@media (max-width: 620px) {
+			.hero {
+				min-height: 68vh;
+			}
+
+			.quick-grid,
+			.preview-grid {
 				grid-template-columns: 1fr;
 			}
 
-			.shell {
-				padding-top: 28px;
+			.section-head {
+				display: block;
+			}
+
+			.section-head p {
+				margin-top: 8px;
 			}
 		}
 	</style>
 </head>
 <body>
-	<main class="shell">
-		<section class="hero">
-			<div class="panel hero-copy">
-				<div class="eyebrow">color4bg.js · GitHub Pages 示例入口</div>
-				<h1>把这些背景演示直接放到网上，让别人能打开就看。</h1>
-				<p class="lead">这个站点把仓库里的静态示例页统一托管到 GitHub Pages。你可以直接分享下面的页面链接，让别人访问不同的背景 demo、项目学习路线和视频导出工具。</p>
-				<div class="actions">
-					<a class="primary" href="examples/demo-module-js.html">打开主示例</a>
-					<a href="examples/project-learning-guide.html">查看学习路线</a>
-					<a href="examples/video-export.html">视频导出工具</a>
-				</div>
-			</div>
-			<div class="panel mini-grid">
-				<div class="stat">
-					<strong>4</strong>
-					<span>个主要页面入口，适合直接分享。</span>
-				</div>
-				<div class="stat">
-					<strong>静态</strong>
-					<span>不依赖后端，GitHub Pages 就能承载。</span>
-				</div>
-				<div class="stat">
-					<strong>同源路径</strong>
-					<span>保留了 build 和 src 引用，示例可以正常加载。</span>
-				</div>
-			</div>
-		</section>
-
-		<div class="section-title">
-			<div>
-				<h2>可访问的示例页面</h2>
-				<p>GitHub Pages 部署后，这些页面都能通过站点地址直接打开。</p>
-			</div>
+	<header class="hero">
+		<div class="hero-inner">
+			<h1 class="brand">color4bg.js</h1>
+			<p class="subtitle">动态 WebGL 背景生成器。直接体验效果、调整配色和参数，也可以导出 1080p 视频。</p>
+			<nav class="actions" aria-label="主要入口">
+				<a class="action primary" href="examples/demo-module-js.html">开始体验</a>
+				<a class="action" href="examples/video-export.html">导出视频</a>
+				<a class="action" href="examples/project-learning-guide.html">学习项目</a>
+			</nav>
 		</div>
+	</header>
 
-		<section class="cards">
-			<a class="card" href="examples/demo-module-js.html">
-				<h3>Demo module JS</h3>
-				<p>基于 ES Module 的示例页，直接从源码引入背景类，适合查看最新实现。</p>
-				<div class="path">/examples/demo-module-js.html</div>
+	<main class="main">
+		<section class="quick-grid" aria-label="快速入口">
+			<a class="quick-card" href="examples/demo-module-js.html">
+				<div>
+					<strong>实时演示</strong>
+					<span>切换背景、调整参数、导入照片提取配色。</span>
+				</div>
+				<em>打开 Demo</em>
 			</a>
-			<a class="card" href="examples/demo-embed-js.html">
-				<h3>Demo embed JS</h3>
-				<p>通过构建产物快速嵌入页面，适合传统 script 引用方式。</p>
-				<div class="path">/examples/demo-embed-js.html</div>
+			<a class="quick-card" href="examples/video-export.html">
+				<div>
+					<strong>视频导出</strong>
+					<span>按 1080p 预览舞台录制动态背景。</span>
+				</div>
+				<em>进入工具</em>
 			</a>
-			<a class="card" href="examples/project-learning-guide.html">
-				<h3>项目学习路线</h3>
-				<p>把仓库结构、源码和构建产物串起来，适合新读者快速上手。</p>
-				<div class="path">/examples/project-learning-guide.html</div>
-			</a>
-			<a class="card" href="examples/video-export.html">
-				<h3>视频导出工具</h3>
-				<p>1080p 导出页面，适合展示或录制背景效果。</p>
-				<div class="path">/examples/video-export.html</div>
+			<a class="quick-card" href="examples/project-learning-guide.html">
+				<div>
+					<strong>读懂项目</strong>
+					<span>从页面入口一路看到源码和图形渲染逻辑。</span>
+				</div>
+				<em>查看教程</em>
 			</a>
 		</section>
 
-		<div class="footer-note">
-			部署后如果你想把主页换成别的入口，只要改这个 <a href="index.html">index.html</a>，示例页路径不用动。GitHub Pages 工作流会自动把 <code>build/</code>、<code>src/</code> 和 <code>examples/</code> 一起带上。
-		</div>
+		<section>
+			<div class="section-head">
+				<h2>效果入口</h2>
+				<p>选择一个页面开始，不需要后端服务。</p>
+			</div>
+
+			<div class="preview-grid">
+				<a class="preview" href="examples/demo-module-js.html">
+					<img src="examples/assets/images/curve-gradient.jpg" alt="Curve gradient preview" />
+					<div class="preview-body">
+						<strong>主示例</strong>
+						<span>最完整的交互控制面板。</span>
+					</div>
+				</a>
+				<a class="preview" href="examples/video-export.html">
+					<img src="examples/assets/images/ambient-light.jpg" alt="Ambient light preview" />
+					<div class="preview-body">
+						<strong>导出工具</strong>
+						<span>录制背景为视频文件。</span>
+					</div>
+				</a>
+				<a class="preview" href="examples/demo-embed-js.html">
+					<img src="examples/assets/images/blur-gradient.jpg" alt="Blur gradient preview" />
+					<div class="preview-body">
+						<strong>嵌入示例</strong>
+						<span>查看传统 script 引入方式。</span>
+					</div>
+				</a>
+				<a class="preview" href="examples/project-learning-guide.html">
+					<img src="examples/assets/images/grid-array.jpg" alt="Grid array preview" />
+					<div class="preview-body">
+						<strong>学习指南</strong>
+						<span>适合第一次阅读这个项目。</span>
+					</div>
+				</a>
+			</div>
+
+			<div class="note">本页是项目入口。要体验完整功能，优先打开“主示例”或“导出工具”。</div>
+		</section>
 	</main>
 </body>
 </html>
