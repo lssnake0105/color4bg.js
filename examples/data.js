@@ -24,7 +24,8 @@ const ColorGroups = {
 		pastel: ["#D1ADFF", "#98D69B", "#FAE390", "#FFACD8", "#7DD5FF", "#D1ADFF"],
 		pastelglossy: ["#FE8BFC", "#BD9FFB", "#8EDBFD", "#C4F5EF", "#E7F9FE", "#E9FFE0"],
 		macaron: ["#FFC8DD", "#FFAFCC", "#BDE0FE", "#A2D2FF", "#CDB4DB", "#FFC8DD"],
-		mint: ["#E8F8F5", "#C7F9CC", "#B6E2D3", "#A0C4FF", "#FDFFB6", "#E8F8F5"]
+		mint: ["#E8F8F5", "#C7F9CC", "#B6E2D3", "#A0C4FF", "#FDFFB6", "#E8F8F5"],
+		"Light Spring": ["#E8AABD", "#F6C0A0", "#F7DEA1", "#B8D88F", "#F5EEBE", "#8ED0D2"]
 	},
 	"Black And White": {
 		black: ["#000000", "#3F3F3F", "#7F7F7F", "#DADADA", "#EAEAEA", "#F3F3F3"],
