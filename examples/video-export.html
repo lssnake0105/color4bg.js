@@ -203,6 +203,8 @@
 				{ mimeType: "video/webm;codecs=vp8", extension: "webm", label: "WebM / VP8" },
 				{ mimeType: "video/webm", extension: "webm", label: "WebM" }
 			]
+			const CustomPaletteStorageKey = "color4bg.videoExport.customPalettes"
+			const CustomPaletteColorCount = 6
 
 			let currentBg = Bgs.find((item) => item.name === getBgFromUrl()) || Bgs.find((item) => item.name === "ambient-light") || Bgs[0]
 			let currentPalette = currentBg.palette || "vivid"
@@ -272,6 +274,7 @@
 
 			function listPalettes() {
 				colorsList.innerHTML = ""
+				addCustomPaletteEditor()
 				addPhotoPaletteImporter()
 				for (const groupName in ColorGroups) {
 					const groupTitle = document.createElement("li")
@@ -341,6 +344,225 @@
 				currentPalette = label
 				activePalette.textContent = label
 				if (colorbg) colorbg.colors([...customPaletteColors])
+			}
+
+			function addCustomPaletteEditor() {
+				const row = document.createElement("li")
+				row.setAttribute("class", "m-2 p-3 min-w-64 rounded-lg border border-gray-300 bg-white/80")
+
+				const title = document.createElement("div")
+				title.setAttribute("class", "mb-3 text-sm font-semibold text-gray-700")
+				title.textContent = "自定义配色方案"
+
+				const nameInput = document.createElement("input")
+				nameInput.type = "text"
+				nameInput.placeholder = "方案名称"
+				nameInput.setAttribute("class", "mb-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm")
+
+				const pickerGrid = document.createElement("div")
+				pickerGrid.setAttribute("class", "grid grid-cols-6 gap-2")
+
+				const initialColors = getCurrentEditorColors()
+				const colorInputs = initialColors.map((hex) => {
+					const input = document.createElement("input")
+					input.type = "color"
+					input.value = hex
+					input.setAttribute("class", "h-10 w-full cursor-pointer rounded-lg border border-white/70 bg-transparent p-0")
+					pickerGrid.appendChild(input)
+					return input
+				})
+
+				const actionRow = document.createElement("div")
+				actionRow.setAttribute("class", "mt-3 grid grid-cols-2 gap-2")
+
+				const applyButton = document.createElement("button")
+				applyButton.type = "button"
+				applyButton.setAttribute("class", "rounded-lg bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-700")
+				applyButton.textContent = "应用当前配色"
+
+				const saveButton = document.createElement("button")
+				saveButton.type = "button"
+				saveButton.setAttribute("class", "rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700")
+				saveButton.textContent = "保存方案"
+
+				const status = document.createElement("div")
+				status.setAttribute("class", "mt-2 text-xs text-gray-500")
+				status.textContent = "固定 6 色，保存后会保留在当前浏览器。"
+
+				const savedList = document.createElement("div")
+				savedList.setAttribute("class", "mt-4")
+
+				function readEditorColors() {
+					return colorInputs.map((input) => normalizeHexColor(input.value)).filter(Boolean)
+				}
+
+				function applyEditorColors() {
+					const colors = readEditorColors()
+					if (!isValidPaletteColors(colors)) {
+						status.textContent = "请输入 6 个有效颜色。"
+						return null
+					}
+					const label = nameInput.value.trim() || "custom palette"
+					applyCustomPalette(colors, label)
+					status.textContent = `已应用 ${label}。`
+					return colors
+				}
+
+				applyButton.addEventListener("click", applyEditorColors)
+				saveButton.addEventListener("click", () => {
+					const colors = applyEditorColors()
+					if (!colors) return
+					const name = getCustomPaletteName(nameInput.value)
+					nameInput.value = name
+					saveCustomPalette({ name, colors, createdAt: Date.now() })
+					applyCustomPalette(colors, name)
+					status.textContent = `已保存 ${name}。`
+					renderSavedCustomPalettes(savedList, colorInputs, nameInput, status)
+				})
+
+				actionRow.append(applyButton, saveButton)
+				row.append(title, nameInput, pickerGrid, actionRow, status, savedList)
+				colorsList.appendChild(row)
+				renderSavedCustomPalettes(savedList, colorInputs, nameInput, status)
+			}
+
+			function renderSavedCustomPalettes(container, colorInputs, nameInput, status) {
+				const palettes = loadCustomPalettes()
+				container.innerHTML = ""
+
+				if (palettes.length === 0) {
+					const empty = document.createElement("div")
+					empty.setAttribute("class", "rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-400")
+					empty.textContent = "暂无已保存方案。"
+					container.appendChild(empty)
+					return
+				}
+
+				const heading = document.createElement("div")
+				heading.setAttribute("class", "mb-2 text-xs font-bold uppercase tracking-wide text-gray-500")
+				heading.textContent = "Saved Custom"
+				container.appendChild(heading)
+
+				palettes.forEach((palette) => {
+					const item = document.createElement("div")
+					item.setAttribute("class", "mb-2 rounded-lg bg-gray-50 p-2")
+
+					const header = document.createElement("div")
+					header.setAttribute("class", "mb-2 flex items-center justify-between gap-2")
+
+					const name = document.createElement("div")
+					name.setAttribute("class", "min-w-0 flex-1 truncate text-sm font-semibold text-gray-700")
+					name.textContent = palette.name
+
+					const applyButton = document.createElement("button")
+					applyButton.type = "button"
+					applyButton.setAttribute("class", "rounded-md px-2 py-1 text-xs font-semibold text-blue-600 hover:bg-blue-50")
+					applyButton.textContent = "应用"
+
+					const deleteButton = document.createElement("button")
+					deleteButton.type = "button"
+					deleteButton.setAttribute("class", "rounded-md px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50")
+					deleteButton.textContent = "删除"
+
+					const preview = document.createElement("div")
+					preview.setAttribute("class", "flex justify-evenly gap-1")
+					palette.colors.forEach((hex) => {
+						const swatch = document.createElement("button")
+						swatch.type = "button"
+						swatch.setAttribute("class", "h-8 flex-1 rounded-lg border border-white/70 shadow-sm")
+						swatch.style.background = hex
+						swatch.setAttribute("aria-label", `应用 ${palette.name}`)
+						swatch.addEventListener("click", () => applySavedCustomPalette(palette, colorInputs, nameInput, status))
+						preview.appendChild(swatch)
+					})
+
+					header.addEventListener("click", () => applySavedCustomPalette(palette, colorInputs, nameInput, status))
+					applyButton.addEventListener("click", (event) => {
+						event.stopPropagation()
+						applySavedCustomPalette(palette, colorInputs, nameInput, status)
+					})
+					deleteButton.addEventListener("click", (event) => {
+						event.stopPropagation()
+						deleteCustomPalette(palette.name)
+						status.textContent = `已删除 ${palette.name}。`
+						renderSavedCustomPalettes(container, colorInputs, nameInput, status)
+					})
+
+					header.append(name, applyButton, deleteButton)
+					item.append(header, preview)
+					container.appendChild(item)
+				})
+			}
+
+			function applySavedCustomPalette(palette, colorInputs, nameInput, status) {
+				palette.colors.forEach((hex, index) => {
+					if (colorInputs[index]) colorInputs[index].value = hex
+				})
+				nameInput.value = palette.name
+				applyCustomPalette(palette.colors, palette.name)
+				status.textContent = `已应用 ${palette.name}。`
+			}
+
+			function loadCustomPalettes() {
+				try {
+					const parsed = JSON.parse(localStorage.getItem(CustomPaletteStorageKey) || "[]")
+					if (!Array.isArray(parsed)) return []
+					return parsed
+						.map((palette) => ({
+							name: typeof palette.name === "string" ? palette.name.trim() : "",
+							colors: Array.isArray(palette.colors) ? palette.colors.map(normalizeHexColor).filter(Boolean) : [],
+							createdAt: Number(palette.createdAt) || Date.now()
+						}))
+						.filter((palette) => palette.name && isValidPaletteColors(palette.colors))
+				} catch (error) {
+					console.warn("Unable to read custom palettes.", error)
+					return []
+				}
+			}
+
+			function saveCustomPalette(palette) {
+				const palettes = loadCustomPalettes().filter((item) => item.name !== palette.name)
+				palettes.unshift(palette)
+				try {
+					localStorage.setItem(CustomPaletteStorageKey, JSON.stringify(palettes))
+				} catch (error) {
+					console.warn("Unable to save custom palettes.", error)
+				}
+			}
+
+			function deleteCustomPalette(name) {
+				const palettes = loadCustomPalettes().filter((palette) => palette.name !== name)
+				try {
+					localStorage.setItem(CustomPaletteStorageKey, JSON.stringify(palettes))
+				} catch (error) {
+					console.warn("Unable to delete custom palette.", error)
+				}
+			}
+
+			function getCustomPaletteName(rawName) {
+				const name = rawName.trim()
+				if (name) return name
+				const existing = new Set(loadCustomPalettes().map((palette) => palette.name))
+				let index = 1
+				while (existing.has(`Custom Palette ${index}`)) index += 1
+				return `Custom Palette ${index}`
+			}
+
+			function getCurrentEditorColors() {
+				if (customPaletteColors && isValidPaletteColors(customPaletteColors)) return customPaletteColors
+				if (Colors[currentPalette]) return Colors[currentPalette].slice(0, CustomPaletteColorCount)
+				return Colors[currentBg.palette] || Colors.vivid
+			}
+
+			function isValidPaletteColors(colors) {
+				return Array.isArray(colors) && colors.length === CustomPaletteColorCount && colors.every(Boolean)
+			}
+
+			function normalizeHexColor(value) {
+				if (typeof value !== "string") return ""
+				const hex = value.trim()
+				if (/^#[0-9a-f]{6}$/i.test(hex)) return hex.toUpperCase()
+				return ""
 			}
 
 			function addPhotoPaletteImporter() {
