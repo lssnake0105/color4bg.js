@@ -92,9 +92,7 @@
 
 			<div class="p-6 flex-1 h-full bg-white">
 				<div id="box" class="relative flex items-center justify-center w-full h-full bg-gray-100 rounded-2xl overflow-hidden">
-					<div id="stage-shell" class="absolute top-1/2 left-1/2 overflow-hidden">
-						<div id="export-stage" class="relative bg-gray-900 overflow-hidden"></div>
-					</div>
+					<div id="export-stage" class="absolute top-1/2 left-1/2 bg-gray-900 overflow-hidden"></div>
 					<div class="z-50 absolute bottom-6 left-6 px-4 py-3 rounded-lg bg-black/30 text-white backdrop-blur">
 						<div class="text-sm font-semibold">1920 x 1080 export stage</div>
 						<div class="text-xs opacity-80" id="estimate_label">5400 frames</div>
@@ -182,7 +180,6 @@
 		<script type="module">
 			import { Colors, ColorGroups, Options, Bgs } from "./data.js"
 
-			const stageShell = document.querySelector("#stage-shell")
 			const stage = document.querySelector("#export-stage")
 			const colorsList = document.querySelector("#colors_list")
 			const optionsList = document.querySelector("#options_list")
@@ -221,7 +218,6 @@
 			let startedAt = 0
 			let objectUrl = ""
 			let activeFormat = getSupportedFormat()
-			let stageResizeFrame = 0
 
 			init()
 
@@ -253,38 +249,17 @@
 				const box = document.querySelector("#box")
 				const boxRect = box.getBoundingClientRect()
 				const scale = Math.min(boxRect.width / ExportStageWidth, boxRect.height / ExportStageHeight)
-				stageShell.style.width = `${ExportStageWidth}px`
-				stageShell.style.height = `${ExportStageHeight}px`
-				stageShell.style.transform = `translate(-50%, -50%) scale(${scale})`
-				stageShell.style.transformOrigin = "center center"
-				stage.style.width = `${ExportStageWidth}px`
-				stage.style.height = `${ExportStageHeight}px`
-				queueExportRenderSizeLock()
-			}
+				const displayWidth = Math.floor(ExportStageWidth * scale)
+				const displayHeight = Math.floor(ExportStageHeight * scale)
 
-			function queueExportRenderSizeLock() {
-				cancelAnimationFrame(stageResizeFrame)
-				stageResizeFrame = requestAnimationFrame(lockExportRenderSize)
-			}
+				stage.style.width = `${displayWidth}px`
+				stage.style.height = `${displayHeight}px`
+				stage.style.transform = "translate(-50%, -50%)"
+				stage.style.transformOrigin = "center center"
 
-			function lockExportRenderSize() {
-				stage.style.width = `${ExportStageWidth}px`
-				stage.style.height = `${ExportStageHeight}px`
-				if (!colorbg || !colorbg.renderer || !colorbg.camera) return
-
-				colorbg.canvasW = colorbg.originW = ExportStageWidth
-				colorbg.canvasH = colorbg.originH = ExportStageHeight
-				colorbg.originRatio = ExportStageWidth / ExportStageHeight
-				colorbg.renderer.setSize(ExportStageWidth, ExportStageHeight)
-				colorbg.camera.orthographic({
-					near: 0.1,
-					far: 10001,
-					left: -ExportStageWidth / 2,
-					right: ExportStageWidth / 2,
-					bottom: -ExportStageHeight / 2,
-					top: ExportStageHeight / 2,
-					zoom: 1
-				})
+				if (colorbg) {
+					colorbg.resize()
+				}
 			}
 
 			function listColorBgs() {
@@ -370,7 +345,7 @@
 					loop: true,
 					playbackSpeed: 1
 				})
-				queueExportRenderSizeLock()
+				setupStageScale()
 				buildBasicOptions()
 				buildAdvancedOptions()
 			}
