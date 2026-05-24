@@ -94,7 +94,7 @@
 				<div id="box" class="relative flex items-center justify-center w-full h-full bg-gray-100 rounded-2xl overflow-hidden">
 					<div id="export-stage" class="absolute top-1/2 left-1/2 bg-gray-900 overflow-hidden"></div>
 					<div class="z-50 absolute bottom-6 left-6 px-4 py-3 rounded-lg bg-black/30 text-white backdrop-blur">
-						<div class="text-sm font-semibold">1920 x 1080 export stage</div>
+						<div class="text-sm font-semibold" id="resolution_label">1920 x 1080 export stage</div>
 						<div class="text-xs opacity-80" id="estimate_label">5400 frames</div>
 					</div>
 
@@ -149,11 +149,21 @@
 										<option value="60">60 fps</option>
 									</select>
 
+									<label class="block mt-3 text-xs font-semibold text-gray-500">Resolution</label>
+									<select id="resolution_select" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
+										<option value="1920x1080" selected>1080p - 1920 x 1080</option>
+										<option value="2560x1440">1440p - 2560 x 1440</option>
+										<option value="3840x2160">4K UHD - 3840 x 2160</option>
+									</select>
+
 									<label class="block mt-3 text-xs font-semibold text-gray-500">Bitrate</label>
 									<select id="bitrate_select" class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2">
 										<option value="16000000">16 Mbps</option>
 										<option value="30000000" selected>30 Mbps</option>
 										<option value="50000000">50 Mbps</option>
+										<option value="80000000">80 Mbps</option>
+										<option value="120000000">120 Mbps</option>
+										<option value="200000000">200 Mbps</option>
 									</select>
 
 									<div class="mt-4 grid grid-cols-2 gap-2">
@@ -187,6 +197,7 @@
 			const activePalette = document.querySelector("#active_palette")
 			const durationInput = document.querySelector("#duration_input")
 			const fpsSelect = document.querySelector("#fps_select")
+			const resolutionSelect = document.querySelector("#resolution_select")
 			const bitrateSelect = document.querySelector("#bitrate_select")
 			const recordBtn = document.querySelector("#record_btn")
 			const stopBtn = document.querySelector("#stop_btn")
@@ -195,6 +206,7 @@
 			const supportNote = document.querySelector("#support_note")
 			const downloadLink = document.querySelector("#download_link")
 			const estimateLabel = document.querySelector("#estimate_label")
+			const resolutionLabel = document.querySelector("#resolution_label")
 
 			const recorderFormats = [
 				{ mimeType: "video/mp4;codecs=avc1.42E01E", extension: "mp4", label: "MP4 / H.264" },
@@ -203,8 +215,8 @@
 				{ mimeType: "video/webm;codecs=vp8", extension: "webm", label: "WebM / VP8" },
 				{ mimeType: "video/webm", extension: "webm", label: "WebM" }
 			]
-			const ExportStageWidth = 1920
-			const ExportStageHeight = 1080
+			let exportStageWidth = 1920
+			let exportStageHeight = 1080
 			const CustomPaletteStorageKey = "color4bg.videoExport.customPalettes"
 			const CustomPaletteColorCount = 6
 
@@ -218,10 +230,13 @@
 			let startedAt = 0
 			let objectUrl = ""
 			let activeFormat = getSupportedFormat()
+			let previewStageWidth = 1920
+			let previewStageHeight = 1080
 
 			init()
 
 			function init() {
+				updateExportResolution()
 				setupStageScale()
 				window.addEventListener("resize", setupStageScale)
 				if (window.visualViewport) {
@@ -248,9 +263,11 @@
 			function setupStageScale() {
 				const box = document.querySelector("#box")
 				const boxRect = box.getBoundingClientRect()
-				const scale = Math.min(boxRect.width / ExportStageWidth, boxRect.height / ExportStageHeight)
-				const displayWidth = Math.floor(ExportStageWidth * scale)
-				const displayHeight = Math.floor(ExportStageHeight * scale)
+				const scale = Math.min(boxRect.width / exportStageWidth, boxRect.height / exportStageHeight)
+				const displayWidth = Math.floor(exportStageWidth * scale)
+				const displayHeight = Math.floor(exportStageHeight * scale)
+				previewStageWidth = displayWidth
+				previewStageHeight = displayHeight
 
 				stage.style.width = `${displayWidth}px`
 				stage.style.height = `${displayHeight}px`
@@ -259,6 +276,7 @@
 
 				if (colorbg) {
 					colorbg.resize()
+					fitCanvasToStage()
 				}
 			}
 
@@ -933,9 +951,45 @@
 			function bindExport() {
 				durationInput.addEventListener("input", updateEstimate)
 				fpsSelect.addEventListener("change", updateEstimate)
+				resolutionSelect.addEventListener("change", () => {
+					updateExportResolution()
+					recreateBackground()
+					updateEstimate()
+				})
 				bitrateSelect.addEventListener("change", updateEstimate)
 				recordBtn.addEventListener("click", startRecording)
 				stopBtn.addEventListener("click", stopRecording)
+			}
+
+			function updateExportResolution() {
+				const [width, height] = resolutionSelect.value.split("x").map(Number)
+				exportStageWidth = Number.isFinite(width) ? width : 1920
+				exportStageHeight = Number.isFinite(height) ? height : 1080
+				resolutionLabel.textContent = `${exportStageWidth} x ${exportStageHeight} export stage`
+			}
+
+			function setCanvasRenderSize(width, height) {
+				if (!colorbg || !colorbg.renderer || !colorbg.camera) return
+				colorbg.canvasW = width
+				colorbg.canvasH = height
+				colorbg.renderer.setSize(width, height)
+				colorbg.camera.orthographic({
+					near: 0.1,
+					far: 10001,
+					left: -width / 2,
+					right: width / 2,
+					bottom: -height / 2,
+					top: height / 2,
+					zoom: 1
+				})
+				fitCanvasToStage()
+			}
+
+			function fitCanvasToStage() {
+				const canvas = stage.querySelector("canvas")
+				if (!canvas) return
+				canvas.style.width = "100%"
+				canvas.style.height = "100%"
 			}
 
 			function getSupportedFormat() {
@@ -953,8 +1007,10 @@
 				const durationMs = clamp(Number(durationInput.value) || 180, 1, 600) * 1000
 				const fps = Number(fpsSelect.value) || 30
 				const bitrate = Number(bitrateSelect.value) || 30000000
+				const resolutionName = `${exportStageWidth}x${exportStageHeight}`
 				const chunks = []
 
+				setCanvasRenderSize(exportStageWidth, exportStageHeight)
 				progress.value = 0
 				recordBtn.disabled = true
 				stopBtn.disabled = false
@@ -974,7 +1030,7 @@
 					stream.getTracks().forEach((track) => track.stop())
 					const blob = new Blob(chunks, { type: activeFormat.mimeType })
 					const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
-					const filename = `color4bg-${currentBg.name}-1080p-${fps}fps-${timestamp}.${activeFormat.extension}`
+					const filename = `color4bg-${currentBg.name}-${resolutionName}-${fps}fps-${timestamp}.${activeFormat.extension}`
 					objectUrl = URL.createObjectURL(blob)
 					downloadLink.href = objectUrl
 					downloadLink.download = filename
@@ -985,6 +1041,7 @@
 					stopBtn.disabled = true
 					progress.value = 1
 					mediaRecorder = null
+					setCanvasRenderSize(previewStageWidth, previewStageHeight)
 				})
 
 				startedAt = performance.now()
@@ -1001,6 +1058,8 @@
 				if (mediaRecorder && mediaRecorder.state === "recording") {
 					mediaRecorder.stop()
 					statusLine.textContent = "Packaging video..."
+				} else {
+					setCanvasRenderSize(previewStageWidth, previewStageHeight)
 				}
 				clearTimers()
 			}
@@ -1018,7 +1077,7 @@
 				const bitrate = Number(bitrateSelect.value) || 30000000
 				const frames = duration * fps
 				const estimatedBytes = (bitrate / 8) * duration
-				estimateLabel.textContent = `${frames.toLocaleString()} frames, estimated ${formatBytes(estimatedBytes)}`
+				estimateLabel.textContent = `${exportStageWidth} x ${exportStageHeight}, ${frames.toLocaleString()} frames, estimated ${formatBytes(estimatedBytes)}`
 			}
 
 			function getBgFromUrl() {
