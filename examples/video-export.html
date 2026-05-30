@@ -77,9 +77,7 @@
 				font-size: 1.1rem;
 			}
 			.toolbar-item.is-open .toolbar-button {
-				opacity: 0;
-				pointer-events: none;
-				transform: translateY(-0.25rem);
+				background: rgba(255, 255, 255, 0.72);
 			}
 		</style>
 	</head>
@@ -922,29 +920,65 @@
 			}
 
 			function bindPanels() {
-				bindHoverPanel("#btn_show_colors", "#box_colors", ".colors-list-box")
-				bindHoverPanel("#btn_show_options", "#box_options", ".options-list-box")
-				bindHoverPanel("#btn_show_advanced_options", "#box_advanced_options", ".advanced-list-box")
-				bindHoverPanel("#btn_show_export", "#box_export", ".export-list-box")
+				const panels = [
+					bindClickPanel("#btn_show_colors", "#box_colors", ".colors-list-box"),
+					bindClickPanel("#btn_show_options", "#box_options", ".options-list-box"),
+					bindClickPanel("#btn_show_advanced_options", "#box_advanced_options", ".advanced-list-box"),
+					bindClickPanel("#btn_show_export", "#box_export", ".export-list-box")
+				]
+				document.addEventListener("pointerdown", (event) => {
+					if (panels.some(({ box }) => box.contains(event.target))) return
+					closePanels(panels)
+				})
+				document.addEventListener("keydown", (event) => {
+					if (event.key === "Escape") closePanels(panels)
+				})
 				document.querySelector("#btn_resetSeed").addEventListener("click", () => colorbg.reset(Math.floor(Math.random() * 100000)))
 			}
 
-			function bindHoverPanel(buttonSelector, boxSelector, panelSelector) {
-				document.querySelector(buttonSelector).addEventListener("mouseenter", () => {
-					const box = document.querySelector(boxSelector)
-					const panel = document.querySelector(panelSelector)
-					panel.style.display = "block"
-					box.classList.add("is-open")
-					setTimeout(() => panel.classList.add("show"), 20)
+			function bindClickPanel(buttonSelector, boxSelector, panelSelector) {
+				const button = document.querySelector(buttonSelector)
+				const box = document.querySelector(boxSelector)
+				const panel = document.querySelector(panelSelector)
+				const panelState = { box, panel }
+
+				button.addEventListener("click", (event) => {
+					event.stopPropagation()
+					const isOpen = box.classList.contains("is-open")
+					closeSiblingPanels(box)
+					if (isOpen) {
+						closePanel(panelState)
+					} else {
+						openPanel(panelState)
+					}
 				})
-				document.querySelector(boxSelector).addEventListener("mouseleave", () => {
-					const box = document.querySelector(boxSelector)
-					const panel = document.querySelector(panelSelector)
-					panel.classList.remove("show")
-					box.classList.remove("is-open")
-					setTimeout(() => {
-						if (!box.matches(":hover")) panel.style.display = "none"
-					}, 160)
+
+				return panelState
+			}
+
+			function openPanel({ box, panel }) {
+				panel.style.display = "block"
+				box.classList.add("is-open")
+				requestAnimationFrame(() => panel.classList.add("show"))
+			}
+
+			function closePanel({ box, panel }) {
+				panel.classList.remove("show")
+				box.classList.remove("is-open")
+				setTimeout(() => {
+					if (!box.classList.contains("is-open")) panel.style.display = "none"
+				}, 160)
+			}
+
+			function closePanels(panels) {
+				panels.forEach(closePanel)
+			}
+
+			function closeSiblingPanels(activeBox) {
+				document.querySelectorAll(".toolbar-item.is-open").forEach((box) => {
+					if (box === activeBox) return
+					const panel = box.querySelector(".colors-list-box, .options-list-box, .advanced-list-box, .export-list-box")
+					if (panel) closePanel({ box, panel })
 				})
 			}
 
